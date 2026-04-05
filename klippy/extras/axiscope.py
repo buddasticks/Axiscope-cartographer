@@ -151,6 +151,22 @@ class Axiscope:
 
         return 0.0
 
+    def _build_probe_result(self, *, source, measured_contact_z, suggested_gcode_z_offset,
+                            measured_time, z_trigger=None, z_offset=None, z_delta=None,
+                            touch_model_z_offset=None, trigger_distance=None):
+        return {
+            'source': source,
+            'measured_contact_z': measured_contact_z,
+            'suggested_gcode_z_offset': suggested_gcode_z_offset,
+            'touch_model_z_offset': touch_model_z_offset,
+            'trigger_distance': trigger_distance,
+            # legacy keys for existing UI/backends
+            'z_trigger': measured_contact_z if z_trigger is None else z_trigger,
+            'z_offset': suggested_gcode_z_offset if z_offset is None else z_offset,
+            'z_delta': measured_contact_z if z_delta is None else z_delta,
+            'last_run': measured_time,
+        }
+
     def handle_connect(self):
         if self.config_file_path is not None:
             expanded_path = os.path.expanduser(self.config_file_path)
@@ -390,27 +406,30 @@ class Axiscope:
         measured_time = self.printer.get_reactor().monotonic()
 
         if tool_no == str(self.reference_tool):
-            self.probe_results[tool_no] = {
-                'z_trigger': z_result,
-                'z_offset': 0.0,
-                'z_delta': 0.0,
-                'last_run': measured_time,
-            }
+            self.probe_results[tool_no] = self._build_probe_result(
+                source='switch_probe_reference',
+                measured_contact_z=z_result,
+                suggested_gcode_z_offset=0.0,
+                measured_time=measured_time,
+                z_delta=0.0,
+            )
         elif str(self.reference_tool) in self.probe_results:
             z_offset = z_result - self.probe_results[str(self.reference_tool)]['z_trigger']
-            self.probe_results[tool_no] = {
-                'z_trigger': z_result,
-                'z_offset': z_offset,
-                'z_delta': z_offset,
-                'last_run': measured_time,
-            }
+            self.probe_results[tool_no] = self._build_probe_result(
+                source='switch_probe',
+                measured_contact_z=z_result,
+                suggested_gcode_z_offset=z_offset,
+                measured_time=measured_time,
+                z_delta=z_offset,
+            )
         else:
-            self.probe_results[tool_no] = {
-                'z_trigger': z_result,
-                'z_offset': None,
-                'z_delta': None,
-                'last_run': measured_time,
-            }
+            self.probe_results[tool_no] = self._build_probe_result(
+                source='switch_probe',
+                measured_contact_z=z_result,
+                suggested_gcode_z_offset=None,
+                measured_time=measured_time,
+                z_delta=None,
+            )
 
         toolhead.move(start_pos, self.z_move_speed)
         toolhead.set_position(start_pos)
@@ -425,16 +444,20 @@ class Axiscope:
         tool_no = int(self.toolchanger.active_tool.tool_number)
         start_pos = toolhead.get_position()
         measured_time = self.printer.get_reactor().monotonic()
+        trigger_distance = self._get_trigger_distance()
 
         if tool_no == self.reference_tool:
             gcmd.respond_info('Cartographer reference touch-home with T%i' % tool_no)
             self.gcode.run_script_from_command(self.touch_home_gcode)
-            self.probe_results[str(tool_no)] = {
-                'z_trigger': 0.0,
-                'z_offset': 0.0,
-                'z_delta': 0.0,
-                'last_run': measured_time,
-            }
+            self.probe_results[str(tool_no)] = self._build_probe_result(
+                source='cartographer_touch_reference',
+                measured_contact_z=0.0,
+                suggested_gcode_z_offset=0.0,
+                measured_time=measured_time,
+                z_delta=0.0,
+                touch_model_z_offset=self.cartographer_touch_model_z_offset,
+                trigger_distance=trigger_distance,
+            )
         else:
             if str(self.reference_tool) not in self.probe_results:
                 gcmd.respond_error(
@@ -449,7 +472,7 @@ class Axiscope:
             if measured_z is None or abs(measured_z) < 1e-9:
                 measured_z = (
                     float(toolhead.get_position()[2])
-                    - self._get_trigger_distance()
+                    - trigger_distance
                     - self.cartographer_touch_model_z_offset
                 )
 
@@ -466,12 +489,14 @@ class Axiscope:
                 current_offset + measured_z
                 if self.use_current_z_offsets else measured_z
             )
-            self.probe_results[str(tool_no)] = {
-                'z_trigger': measured_z,
-                'z_offset': suggested_offset,
-                'z_delta': measured_z,
-                'last_run': measured_time,
-            }
+            self.probe_results[str(tool_no)] = self._build_probe_result(
+                source='cartographer_touch',
+                measured_contact_z=measured_z,
+                suggested_gcode_z_offset=suggested_offset,
+                measured_time=measured_time,
+                touch_model_z_offset=self.cartographer_touch_model_z_offset,
+                trigger_distance=trigger_distance,
+            )
 
         # lift away from the bed before the next tool change
         safe_return_z = max(start_pos[2], self.lift_z)
@@ -519,8 +544,8 @@ class Axiscope:
                 continue
             if self.z_backend == 'cartographer':
                 gcmd.respond_info(
-                    'T%s raw_touch_delta: %.3f | suggested_gcode_z_offset: %.3f'
-                    % (tool_no, result['z_delta'], result['z_offset'])
+                    'T%s measured_contact_z: %.3f | suggested_gcode_z_offset: %.3f'
+                    % (tool_no, result['measured_contact_z'], result['suggested_gcode_z_offset'])
                 )
             else:
                 gcmd.respond_info(
