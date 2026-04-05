@@ -224,6 +224,18 @@ class Axiscope:
                     pass
         return None
 
+    def _get_trigger_distance(self):
+        for obj_name in ('scanner', 'cartographer', 'probe'):
+            obj = self.printer.lookup_object(obj_name, None)
+            if obj is None:
+                continue
+            if hasattr(obj, 'trigger_distance'):
+                try:
+                    return float(obj.trigger_distance)
+                except Exception:
+                    pass
+        return 2.0
+
     def update_tool_offsets(self, cfg_data, tool_name, offsets):
         axis = "xyz" if len(offsets) == 3 else "xy"
         section_name = "[%s]" % tool_name
@@ -400,12 +412,12 @@ class Axiscope:
 
             measured_z = self._get_last_z_result()
             if measured_z is None or abs(measured_z) < 1e-9:
-                measured_z = float(toolhead.get_position()[2])
+                measured_z = float(toolhead.get_position()[2]) - self._get_trigger_distance()
 
             if measured_z is None:
                 raise gcmd.error(
                     'Unable to read a Cartographer touch result after %s. '
-                    'Tried last_z_result and current toolhead Z.'
+                    'Tried last_z_result and toolhead Z minus trigger_distance.'
                     % self.touch_probe_gcode
                 )
 
