@@ -84,7 +84,7 @@ If you want to use automatic Z calibration, choose one of the following:
 Quick installation using curl:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/nic335/Axiscope/refs/heads/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/buddasticks/Axiscope/refs/heads/main/install.sh | bash
 ```
 
 The install script will:
@@ -93,6 +93,14 @@ The install script will:
 - Install required dependencies
 - Set up the systemd service
 - Configure Moonraker integration
+
+### Installing a non-main branch for testing
+
+If you want to install a feature branch before it is merged into `main`, use the branch-specific installer and pass the branch name:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/buddasticks/Axiscope/refs/heads/cartographer-hide-z-endstop-map/install.sh | bash -s -- --branch cartographer-hide-z-endstop-map
+```
 
 ### Starting Axiscope
 
