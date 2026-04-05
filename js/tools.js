@@ -253,6 +253,16 @@ function formatBackend(source) {
   return '-';
 }
 
+function applyToolGridLayout(toolCount) {
+  const $toolList = $('#tool-list');
+  $toolList.removeClass('tool-grid-2 tool-grid-3');
+  if (toolCount >= 5) {
+    $toolList.addClass('tool-grid-3');
+  } else {
+    $toolList.addClass('tool-grid-2');
+  }
+}
+
 function ensureToolHeaderActions() {
   let $actions = $('#tool-header-actions');
   if ($actions.length) {
@@ -426,6 +436,7 @@ function getTools() {
         }
       });
 
+      applyToolGridLayout(tool_numbers.length);
       getProbeResults();
       
       $.get(printerUrl(printerIp, "/printer/objects/query?axiscope")).then(function(data) {

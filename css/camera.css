@@ -1,3 +1,28 @@
+body {
+    background:
+        radial-gradient(circle at top left, rgba(95, 178, 255, 0.24), transparent 34%),
+        radial-gradient(circle at top right, rgba(82, 232, 177, 0.12), transparent 26%),
+        linear-gradient(180deg, #111b29 0%, #0a1220 100%) !important;
+    color: #f3f8ff !important;
+}
+
+.workspace-panel {
+    background: linear-gradient(180deg, rgba(28, 41, 58, 0.96) 0%, rgba(16, 26, 40, 0.98) 100%) !important;
+}
+
+.panel-action,
+.camera-toolbar .btn,
+.slider-card,
+.telemetry-pill,
+.tool-card,
+.tool-input-card,
+.tool-measurement-card,
+.calibrate-card,
+.tool-metric,
+.status-chip {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+
 #camContainer {
     position: relative;
     overflow: hidden;
@@ -9,11 +34,11 @@
     width: 100%;
     aspect-ratio: 4/3;
     border-radius: 24px;
-    border: 1px solid rgba(124, 154, 194, 0.18);
+    border: 1px solid rgba(145, 174, 214, 0.22);
     background:
-        radial-gradient(circle at center, rgba(78, 161, 255, 0.08), transparent 40%),
-        linear-gradient(180deg, rgba(7, 12, 18, 0.98), rgba(3, 5, 8, 1));
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+        radial-gradient(circle at center, rgba(95, 178, 255, 0.1), transparent 40%),
+        linear-gradient(180deg, rgba(12, 18, 27, 0.98), rgba(5, 8, 12, 1));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
 #camContainer * {
@@ -53,7 +78,6 @@
     filter: drop-shadow(0 0 14px rgba(255, 0, 0, 0.08));
 }
 
-/* Single-screen desktop workspace */
 @media (min-width: 1360px) {
     html, body {
         height: 100%;
@@ -115,21 +139,25 @@
         margin-bottom: 2px !important;
         font-size: 0.62rem !important;
         letter-spacing: 0.08em !important;
+        color: #9fb7d6 !important;
     }
 
     .panel-note {
         font-size: 0.74rem !important;
         line-height: 1.2 !important;
+        color: #b3c4da !important;
     }
 
     .panel-action {
         padding: 8px 12px !important;
         font-size: 0.78rem !important;
+        background: rgba(255, 255, 255, 0.04) !important;
     }
 
     .status-chip {
         padding: 7px 10px !important;
         font-size: 0.72rem !important;
+        background: rgba(55, 211, 154, 0.11) !important;
     }
 
     .camera-panel {
@@ -147,6 +175,7 @@
     .camera-toolbar .btn {
         padding: 7px 10px !important;
         font-size: 0.78rem !important;
+        background: rgba(255, 255, 255, 0.05) !important;
     }
 
     #camContainer {
@@ -160,6 +189,7 @@
         margin-top: 8px !important;
         padding: 8px 10px !important;
         border-radius: 14px !important;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.018)) !important;
     }
 
     .slider-row + .slider-row {
@@ -183,10 +213,12 @@
     .telemetry-pill {
         padding: 8px 10px !important;
         border-radius: 12px !important;
+        background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.018)) !important;
     }
 
     .telemetry-label {
         font-size: 0.6rem !important;
+        color: #9fb7d6 !important;
     }
 
     .telemetry-value {
@@ -213,6 +245,7 @@
         font-size: 0.66rem !important;
         margin-bottom: 8px !important;
         letter-spacing: 0.08em !important;
+        color: #9fb7d6 !important;
     }
 
     #BouncePositionBar,
@@ -267,10 +300,17 @@
         flex: 1 1 auto !important;
         min-height: 0 !important;
         display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
         gap: 8px !important;
         grid-auto-rows: minmax(0, 1fr) !important;
         align-content: stretch !important;
+    }
+
+    .tool-list.tool-grid-2 {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .tool-list.tool-grid-3 {
+        grid-template-columns: 1fr 1fr 1fr !important;
     }
 
     .tool-list-item {
@@ -286,6 +326,7 @@
         min-height: 0 !important;
         padding: 10px !important;
         border-radius: 16px !important;
+        background: linear-gradient(180deg, rgba(24, 37, 54, 0.98), rgba(15, 24, 37, 0.98)) !important;
     }
 
     .tool-card-top {
@@ -308,6 +349,7 @@
     .capture-btn {
         font-size: 0.8rem !important;
         padding: 8px !important;
+        background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025)) !important;
     }
 
     .capture-btn i {
@@ -319,6 +361,7 @@
     .tool-measurement-card {
         padding: 8px !important;
         border-radius: 14px !important;
+        background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02)) !important;
     }
 
     .tool-measurement-card {
@@ -329,6 +372,7 @@
         font-size: 0.56rem !important;
         margin-bottom: 6px !important;
         letter-spacing: 0.08em !important;
+        color: #9fb7d6 !important;
     }
 
     .tool-axis-inputs {
@@ -359,6 +403,7 @@
         padding: 6px 8px !important;
         border-radius: 10px !important;
         gap: 8px !important;
+        background: rgba(255,255,255,0.04) !important;
     }
 
     .tool-metric-label {
@@ -385,19 +430,66 @@
         border-radius: 10px !important;
     }
 
-    .calibrate-btn {
-        width: 100% !important;
-        height: 100% !important;
-        min-height: 100px !important;
-        padding: 12px !important;
-        font-size: 0.86rem !important;
-        border-radius: 14px !important;
+    .tool-list.tool-grid-3 .tool-card,
+    .tool-list.tool-grid-3 .calibrate-card {
+        padding: 8px !important;
     }
 
-    .calibrate-btn .btn-subtext {
-        margin-top: 3px !important;
-        font-size: 0.64rem !important;
-        line-height: 1.15 !important;
+    .tool-list.tool-grid-3 .tool-card-top {
+        grid-template-columns: 46px minmax(0, 1fr) !important;
+        gap: 6px !important;
+    }
+
+    .tool-list.tool-grid-3 .tool-badge,
+    .tool-list.tool-grid-3 .capture-btn,
+    .tool-list.tool-grid-3 .tool-input-card {
+        min-height: 58px !important;
+        border-radius: 12px !important;
+    }
+
+    .tool-list.tool-grid-3 .tool-badge {
+        font-size: 1.15rem !important;
+    }
+
+    .tool-list.tool-grid-3 .tool-input-card,
+    .tool-list.tool-grid-3 .tool-measurement-card {
+        padding: 6px !important;
+    }
+
+    .tool-list.tool-grid-3 .tool-columns {
+        grid-template-columns: 1fr !important;
+        gap: 6px !important;
+    }
+
+    .tool-list.tool-grid-3 .tool-section-title {
+        font-size: 0.5rem !important;
+        margin-bottom: 4px !important;
+    }
+
+    .tool-list.tool-grid-3 .tool-axis-inputs {
+        gap: 4px !important;
+    }
+
+    .tool-list.tool-grid-3 .tool-metric {
+        min-height: 28px !important;
+        padding: 5px 6px !important;
+        gap: 6px !important;
+    }
+
+    .tool-list.tool-grid-3 .tool-metric-label {
+        font-size: 0.46rem !important;
+    }
+
+    .tool-list.tool-grid-3 .tool-metric-value {
+        font-size: 0.7rem !important;
+        max-width: 44% !important;
+    }
+
+    .tool-list.tool-grid-3 .copy-btn {
+        min-height: 28px !important;
+        margin-top: 4px !important;
+        padding: 5px 6px !important;
+        font-size: 0.66rem !important;
     }
 }
 
