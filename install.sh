@@ -3,7 +3,7 @@
 # Default values
 AXISCOPE_ENV="axiscope-env"
 INSTALL_DIR="$HOME/axiscope"
-REPO_URL="https://github.com/buddasticks/Axiscope.git"
+REPO_URL="https://github.com/buddasticks/Axiscope-cartographer.git"
 BRANCH="main"
 
 # Parse command line arguments
