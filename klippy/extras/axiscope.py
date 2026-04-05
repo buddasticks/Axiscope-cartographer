@@ -398,22 +398,26 @@ class Axiscope:
             gcmd.respond_info('Cartographer touch-probe with T%i' % tool_no)
             self.gcode.run_script_from_command(self.touch_probe_gcode)
 
-            raw_delta = self._get_last_z_result()
-            if raw_delta is None:
+            measured_z = self._get_last_z_result()
+            if measured_z is None or abs(measured_z) < 1e-9:
+                measured_z = float(toolhead.get_position()[2])
+
+            if measured_z is None:
                 raise gcmd.error(
-                    'Unable to read last_z_result after %s. '
-                    'Try exposing it through the standard probe/scanner status object.'
+                    'Unable to read a Cartographer touch result after %s. '
+                    'Tried last_z_result and current toolhead Z.'
                     % self.touch_probe_gcode
                 )
+
             current_offset = self.get_current_tool_z_offset(tool_no)
             suggested_offset = (
-                current_offset + raw_delta
-                if self.use_current_z_offsets else raw_delta
+                current_offset + measured_z
+                if self.use_current_z_offsets else measured_z
             )
             self.probe_results[str(tool_no)] = {
-                'z_trigger': raw_delta,
+                'z_trigger': measured_z,
                 'z_offset': suggested_offset,
-                'z_delta': raw_delta,
+                'z_delta': measured_z,
                 'last_run': measured_time,
             }
 
