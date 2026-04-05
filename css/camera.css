@@ -385,7 +385,7 @@ body {
     }
 
     .tool-columns {
-        grid-template-columns: 1fr 1fr !important;
+        grid-template-columns: 1fr !important;
         gap: 8px !important;
         align-items: stretch !important;
     }
@@ -416,7 +416,7 @@ body {
 
     .tool-metric-value {
         flex: 0 0 auto !important;
-        max-width: 40% !important;
+        max-width: 48% !important;
         line-height: 1.05 !important;
         font-size: 0.78rem !important;
         word-break: break-word !important;
@@ -482,7 +482,7 @@ body {
 
     .tool-list.tool-grid-3 .tool-metric-value {
         font-size: 0.7rem !important;
-        max-width: 44% !important;
+        max-width: 55% !important;
     }
 
     .tool-list.tool-grid-3 .copy-btn {
