@@ -239,10 +239,50 @@ function isCartographerSource(source) {
   return typeof source === 'string' && source.startsWith('cartographer');
 }
 
+function ensureToolHeaderActions() {
+  let $actions = $('#tool-header-actions');
+  if ($actions.length) {
+    return $actions;
+  }
+
+  const $statusChip = $('.status-chip').last();
+  if (!$statusChip.length) {
+    return $();
+  }
+
+  $actions = $('<div id="tool-header-actions" class="d-flex align-items-center gap-2 flex-wrap justify-content-end"></div>');
+  const $buttonSlot = $('<div id="calibrate-all-slot"></div>');
+  $statusChip.before($actions);
+  $actions.append($buttonSlot);
+  $actions.append($statusChip);
+  return $actions;
+}
+
+function renderCalibrateButton(isEnabled = false) {
+  ensureToolHeaderActions();
+  const buttonClass = isEnabled ? 'btn-primary' : 'btn-secondary';
+  const disabledAttr = isEnabled ? '' : 'disabled';
+  const html = `
+    <button 
+      type="button" 
+      class="btn btn-sm ${buttonClass}"
+      onclick="calibrateAllTools()"
+      ${disabledAttr}
+      id="calibrate-all-btn"
+      style="border-radius:999px;font-weight:700;padding:8px 14px;white-space:nowrap;"
+      title="Run Z offset calibration for all tools"
+    >
+      Calibrate all Z offsets
+    </button>
+  `;
+  $('#calibrate-all-slot').html(html);
+}
+
 function getProbeResults() {
   var url = printerUrl(printerIp, "/printer/objects/query?axiscope");
   return $.get(url).then(function(data) {
     const hasProbeResults = data.result?.status?.axiscope?.probe_results != null;
+    renderCalibrateButton(hasProbeResults);
     const $calibrateBtn = $('#calibrate-all-btn');
     if ($calibrateBtn.length) {
       if (hasProbeResults) {
@@ -258,6 +298,7 @@ function getProbeResults() {
     return {};
   }).catch(function(error) {
     console.error('Error fetching probe results:', error);
+    renderCalibrateButton(false);
     return {};
   });
 }
@@ -304,27 +345,6 @@ function updateAllProbeResults() {
       }
     });
   });
-}
-
-function calibrateButton(isEnabled = false) {
-  const buttonClass = isEnabled ? 'btn-primary' : 'btn-secondary';
-  const disabledAttr = isEnabled ? '' : 'disabled';
-  return `
-<li class="list-group-item tool-list-item">
-  <div class="calibrate-card">
-    <button 
-      type="button" 
-      class="btn btn-sm calibrate-btn ${buttonClass}"
-      onclick="calibrateAllTools()"
-      ${disabledAttr}
-      id="calibrate-all-btn"
-    >
-      Calibrate all Z offsets
-      <span class="btn-subtext">Run the active backend for every tool and refresh the suggested values.</span>
-    </button>
-  </div>
-</li>
-`;
 }
 
 function calibrateAllTools() {
@@ -378,10 +398,7 @@ function getTools() {
         }
       });
 
-      getProbeResults().then(results => {
-        const hasProbeResults = Object.keys(results).length > 0;
-        $("#tool-list").append(calibrateButton(hasProbeResults));
-      });
+      getProbeResults();
       
       $.get(printerUrl(printerIp, "/printer/objects/query?axiscope")).then(function(data) {
         const hasProbeResults = data.result?.status?.axiscope?.probe_results != null;
