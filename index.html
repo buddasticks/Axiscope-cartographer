@@ -31,56 +31,549 @@
     <link rel="stylesheet" href="./css/camera.css">
 
     <style>
+        :root {
+            --text-main: #edf4ff;
+            --text-soft: #9cb1cb;
+            --text-muted: #7589a3;
+            --border: rgba(124, 154, 194, 0.18);
+            --border-strong: rgba(124, 154, 194, 0.28);
+            --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        body {
+            min-height: 100vh;
+            color: var(--text-main);
+            background:
+                radial-gradient(circle at top left, rgba(78, 161, 255, 0.16), transparent 32%),
+                radial-gradient(circle at top right, rgba(55, 211, 154, 0.08), transparent 24%),
+                linear-gradient(180deg, #0a1119 0%, #05080d 100%);
+        }
+
+        .app-shell {
+            max-width: 1720px;
+            padding: 28px 20px 40px;
+        }
+
+        .workspace-panel {
+            background: linear-gradient(180deg, rgba(20, 29, 42, 0.96) 0%, rgba(12, 19, 30, 0.98) 100%);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .workspace-panel.padded {
+            padding: 22px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .panel-header.compact {
+            margin-bottom: 14px;
+        }
+
+        .panel-header h1,
+        .panel-header h2 {
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+        }
+
+        .panel-note {
+            color: var(--text-soft);
+            font-size: 0.92rem;
+            margin: 2px 0 0;
+        }
+
+        .panel-action {
+            border-radius: 14px;
+            border-color: var(--border-strong);
+            color: var(--text-main);
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            border-radius: 999px;
+            background: rgba(55, 211, 154, 0.08);
+            border: 1px solid rgba(55, 211, 154, 0.24);
+            color: #c9ffea;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-chip::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #37d39a;
+            box-shadow: 0 0 0 4px rgba(55, 211, 154, 0.14);
+        }
+
         .modal-content {
-            border-radius: 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border-strong);
+            background: linear-gradient(180deg, #182434 0%, #101924 100%);
         }
+
+        .form-control,
+        .form-range,
+        .input-group-text {
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-control {
+            background: rgba(6, 10, 15, 0.7);
+            color: var(--text-main);
+            border-radius: 14px;
+        }
+
+        .form-control::placeholder {
+            color: #6f839e;
+        }
+
         .form-control:focus {
-            border-color: #80bdff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            border-color: rgba(78, 161, 255, 0.55);
+            box-shadow: 0 0 0 0.18rem rgba(78, 161, 255, 0.18);
+            background: rgba(6, 10, 15, 0.82);
+            color: var(--text-main);
         }
+
         #camera-select {
             display: none;
         }
+
         .camera-option {
             cursor: pointer;
-            transition: background-color 0.2s;
-            border: 1px solid #dee2e6;
+            transition: background-color 0.2s, transform 0.2s, border-color 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             margin-bottom: 10px;
-            border-radius: 5px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.02);
         }
+
         .camera-option:hover {
-            background-color: #f8f9fa;
+            background-color: rgba(255, 255, 255, 0.04);
+            transform: translateY(-1px);
         }
+
         .camera-option.selected {
-            border-color: #0d6efd;
-            background-color: #e7f1ff;
+            border-color: rgba(78, 161, 255, 0.62);
+            background-color: rgba(78, 161, 255, 0.1);
         }
+
         .camera-preview {
             width: 160px;
             height: 120px;
             object-fit: cover;
-            border-radius: 4px;
+            border-radius: 10px;
         }
+
         .camera-list-container {
             max-height: 400px;
             overflow-y: auto;
         }
-        #camContainer {
-            display: none;
+
+        .camera-toolbar .btn,
+        #gcode-send,
+        #saveIpBtn,
+        #disconnectBtn,
+        #home-all,
+        #qgl,
+        #disable-motors,
+        #set-endstop-position {
+            border-radius: 14px;
+        }
+
+        .camera-toolbar .btn {
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+        }
+
+        .camera-toolbar .btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .slider-card {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+        }
+
+        .slider-row {
+            display: grid;
+            grid-template-columns: 16px 1fr 16px;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .slider-row + .slider-row {
+            margin-top: 10px;
+        }
+
+        .telemetry-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .telemetry-pill {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.01));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+
+        .telemetry-label {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .telemetry-value {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        #BouncePositionBar,
+        #BigPositionBar {
+            margin-top: 10px;
+        }
+
+        #BouncePositionBar .btn,
+        #BigPositionBar .btn,
+        .primary-actions .btn {
+            border-radius: 12px !important;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .primary-actions {
+            margin-bottom: 10px;
+        }
+
+        .primary-actions .btn-group {
+            width: 100%;
+            max-width: 460px;
+        }
+
+        .primary-actions .btn {
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .section-divider {
+            height: 1px;
+            margin: 16px 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+        }
+
+        .section-subtitle {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            text-align: left;
+            padding-left: 6px;
+        }
+
+        .command-input-row {
+            display: grid;
+            grid-template-columns: 1fr 120px;
+            gap: 12px;
+        }
+
+        .tool-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .tool-list-item {
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+
+        .tool-card {
+            padding: 16px;
+            border-radius: 24px;
+            border: 1px solid rgba(117, 137, 163, 0.18);
+            background: linear-gradient(180deg, rgba(18, 28, 42, 0.98), rgba(11, 18, 28, 0.98));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+
+        .tool-card-top {
+            display: grid;
+            grid-template-columns: 86px minmax(240px, 1fr) minmax(300px, 360px);
+            gap: 14px;
+            align-items: stretch;
+        }
+
+        .tool-badge {
+            width: 100%;
+            height: 100%;
+            min-height: 158px;
+            border-radius: 22px;
+            border: 1px solid rgba(117, 137, 163, 0.18);
+            background: linear-gradient(180deg, rgba(91, 105, 125, 0.16), rgba(55, 67, 82, 0.12));
+            color: var(--text-main);
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+
+        .tool-badge.disabled,
+        .tool-badge:disabled {
+            opacity: 1;
+            border-color: rgba(78, 161, 255, 0.4);
+            background: linear-gradient(180deg, rgba(61, 124, 255, 0.28), rgba(28, 72, 150, 0.22));
+            color: #ffffff;
+            box-shadow: 0 0 0 1px rgba(78, 161, 255, 0.1), inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+
+        .tool-input-card,
+        .tool-measurement-card,
+        .calibrate-card {
+            border-radius: 22px;
+            border: 1px solid rgba(117, 137, 163, 0.14);
+            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+            padding: 14px;
+        }
+
+        .tool-section-title {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .capture-btn {
+            width: 100%;
+            height: 100%;
+            min-height: 158px;
+            border-radius: 22px;
+            border: 1px solid rgba(117, 137, 163, 0.18);
+            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.02em;
+            text-transform: none;
+        }
+
+        .capture-btn:hover,
+        .capture-btn:focus,
+        .axis-fetch:hover,
+        .copy-btn:hover,
+        .calibrate-btn:hover {
+            background: rgba(78, 161, 255, 0.12);
+            color: #fff;
+        }
+
+        .tool-axis-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .axis-fetch {
+            min-width: 52px;
+            border-radius: 14px 0 0 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255,255,255,0.08);
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .tool-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .tool-column {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tool-metric-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tool-metric {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .tool-metric-label {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .tool-metric-value {
+            color: var(--text-main);
+            font-size: 1.03rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-align: right;
+        }
+
+        .tool-metric-value.is-highlight {
+            color: #9dd1ff;
+        }
+
+        .copy-btn {
+            margin-top: auto;
+            width: 100%;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(78, 161, 255, 0.24);
+            background: rgba(78, 161, 255, 0.08);
+            color: #d7ebff;
+            font-weight: 700;
+        }
+
+        .calibrate-btn {
+            width: 100%;
+            padding: 16px 18px;
+            border-radius: 18px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            text-transform: none;
+        }
+
+        .calibrate-btn .btn-subtext {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            opacity: 0.75;
+        }
+
+        #gcode-send {
+            font-weight: 700;
+            background: linear-gradient(180deg, rgba(78,161,255,0.22), rgba(41,121,255,0.16));
+            border-color: rgba(78,161,255,0.28);
+            color: #eff7ff;
+        }
+
+        @media (max-width: 1500px) {
+            .tool-card-top {
+                grid-template-columns: 80px minmax(220px, 1fr) minmax(280px, 330px);
+            }
+        }
+
+        @media (max-width: 1199px) {
+            .app-shell {
+                padding-inline: 14px;
+            }
+
+            .tool-card-top {
+                grid-template-columns: 76px 1fr;
+            }
+
+            .tool-measurement-card {
+                grid-column: 1 / -1;
+            }
+
+            .tool-badge,
+            .capture-btn {
+                min-height: 132px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .workspace-panel.padded {
+                padding: 16px;
+            }
+
+            .telemetry-strip,
+            .command-input-row,
+            .tool-columns {
+                grid-template-columns: 1fr;
+            }
+
+            .panel-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .tool-card-top {
+                grid-template-columns: 1fr;
+            }
+
+            .tool-badge,
+            .capture-btn {
+                min-height: 88px;
+            }
         }
     </style>
   </head>
 
   <body data-bs-theme="dark">
-    <!-- Printer IP Modal -->
     <div class="modal fade" id="printerModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="printerModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header border-bottom-0 pb-0">
                     <h5 class="modal-title" id="printerModalLabel">Printer Configuration</h5>
                 </div>
                 <div class="modal-body">
-                    <!-- IP Address Input -->
                     <div class="mb-3">
                         <label for="printerIp" class="form-label">Printer IP Address</label>
                         <div class="input-group">
@@ -94,99 +587,92 @@
                         </div>
                     </div>
 
-                    <!-- Camera Selection (initially hidden) -->
                     <div id="camera-select" class="mb-3">
                         <label class="form-label">Select Camera</label>
                         <div class="camera-list-container">
-                            <div id="cameraList" class="list-group">
-                                <!-- Camera options will be inserted here -->
-                            </div>
+                            <div id="cameraList" class="list-group"></div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-top-0 pt-0">
                     <button type="button" class="btn btn-primary" id="saveIpBtn">Save IP</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="container text-center">
-        <div class="row">
-            <!-- ----------- body.jinja------------------>
-            <div class="col p-3">
-                <div class="border border-secondary-subtle rounded bg-body-tertiary p-2">
-                    <div class="row p-2 pb-2">
-                        <button name="ChangePrinter" id="ChangePrinter">Change Printer / Camera</button>
-                    </div>
-                    <div class="row p-2 pb-2">
-                        <!-- Flip Controls -->
-                        <div class="row p-2">
-                            <div class="col-6">
-                                <button type="button" class="btn btn-secondary w-100" id="flip-horizontal">
-                                    <i class="bi bi-arrow-left-right"></i> Flip Horizontal
-                                </button>
-                            </div>
-                            <div class="col-6">
-                                <button type="button" class="btn btn-secondary w-100" id="flip-vertical">
-                                    <i class="bi bi-arrow-down-up"></i> Flip Vertical
-                                </button>
-                            </div>
+    <div class="container-fluid app-shell">
+        <div class="row g-4 align-items-start">
+            <div class="col-12 col-xxl-7">
+                <div class="workspace-panel padded camera-panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="eyebrow">Alignment workspace</div>
+                            <h1>Camera &amp; motion</h1>
+                            <p class="panel-note">Center T0 on the crosshair, capture the reference, then swap tools and copy the suggested offsets.</p>
                         </div>
-                        <div id="camContainer" class="img-overlay-wrap">
+                        <button class="btn btn-outline-light panel-action" name="ChangePrinter" id="ChangePrinter">Change printer / camera</button>
+                    </div>
+
+                    <div class="row g-2 camera-toolbar mb-2">
+                        <div class="col-12 col-md-6">
+                            <button type="button" class="btn w-100" id="flip-horizontal">
+                                <i class="bi bi-arrow-left-right"></i> Flip Horizontal
+                            </button>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <button type="button" class="btn w-100" id="flip-vertical">
+                                <i class="bi bi-arrow-down-up"></i> Flip Vertical
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="camContainer" class="img-overlay-wrap">
                         <img id="zoom-image" src="" width="800"/>
                         <svg viewBox="0 0 200 200">
                             <circle cx="100" cy="75" r="50" stroke="red" stroke-width="0.25" fill="none"/>
                             <line x1="100" y1="15" x2="100" y2="135" stroke="red" stroke-width="0.25" />
                             <line x1="40" y1="75" x2="160" y2="75" stroke="red" stroke-width="0.25" />
                         </svg>
-                        </div>
-                        <div class="row p-2">
-                        <div class="col-1">
+                    </div>
+
+                    <div class="slider-card">
+                        <div class="slider-row">
                             <i class="bi bi-zoom-out"></i>
-                        </div>
-                        <div class="col-10">
                             <input type="range" class="form-range" min="0" max="600" value="0" id="zoom-range">
-                        </div>
-                        <div class="col-1">
                             <i class="bi bi-zoom-in"></i>
                         </div>
-                        </div>
-                    
-                        <div class="row p-2">
-                        <div class="col-1">
+                        <div class="slider-row">
                             <i class="bi bi-brightness-low"></i>
-                        </div>
-                        <div class="col-10">
                             <input type="range" class="form-range" min="0" max="400" id="contrast-range">
-                        </div>
-                        <div class="col-1">
                             <i class="bi bi-brightness-high"></i>
                         </div>
-                        </div>
                     </div>
-                        <!---------------------------- positioning --------------------->
-                    <div id="positioning">
-                        <div class="row justify-content-center">
-                        <ul class="list-group list-group-horizontal-sm justify-content-center pb-2">
-                            <li class="list-group-item"><span>X: </span><span id="pos-x">0.0</span></li>
-                            <li class="list-group-item"><span>Y: </span><span id="pos-y">0.0</span></li>
-                            <li class="list-group-item"><span>Z: </span><span id="pos-z">0.0</span></li>
-                        </ul>
+
+                    <div id="positioning" class="mt-3">
+                        <div class="telemetry-strip">
+                            <div class="telemetry-pill"><span class="telemetry-label">X</span><span class="telemetry-value" id="pos-x">0.0</span></div>
+                            <div class="telemetry-pill"><span class="telemetry-label">Y</span><span class="telemetry-value" id="pos-y">0.0</span></div>
+                            <div class="telemetry-pill"><span class="telemetry-label">Z</span><span class="telemetry-value" id="pos-z">0.0</span></div>
                         </div>
-                        <div class="row">
-                        <div class="btn-toolbar justify-content-center" role="toolbar" aria-label="Homing Toolbar">
-                            <div class="btn-group btn-group-sm ps-5 pe-5 pb-1" role="group" aria-label="">
-                            <button type="button" class="btn btn-danger border" id="home-all" data-homed="false" data-url="">HOME ALL</button>
-                            <button type="button" class="btn btn-danger border" id="qgl" data-qgl="false" data-url="">QGL</button>
-                            <button type="button" class="btn btn-danger border" id="disable-motors" data-motoron="false" data-url="">DISABLE</button>
+
+                        <div class="row justify-content-center primary-actions">
+                            <div class="btn-toolbar justify-content-center" role="toolbar" aria-label="Homing Toolbar">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Main machine controls">
+                                    <button type="button" class="btn btn-danger border" id="home-all" data-homed="false" data-url="">HOME ALL</button>
+                                    <button type="button" class="btn btn-danger border" id="qgl" data-qgl="false" data-url="">QGL</button>
+                                    <button type="button" class="btn btn-danger border" id="disable-motors" data-motoron="false" data-url="">DISABLE</button>
+                                </div>
                             </div>
                         </div>
-                        </div>
+
+                        <div class="section-divider"></div>
+                        <div class="section-subtitle">Fine jog</div>
                         <div id="BouncePositionBar"></div>
+                        <div class="section-subtitle mt-3">Travel jog</div>
                         <div id="BigPositionBar"></div>
-                        <!-- Endstop Position Section -->
-                        <div id="endstop-section" class="mt-2 mb-1 border-top border-secondary pt-2" style="display:none;">
+
+                        <div id="endstop-section" class="mt-3 pt-3 border-top border-secondary-subtle" style="display:none;">
                             <div class="d-flex align-items-center justify-content-between px-2 pb-1">
                                 <small class="text-secondary fw-semibold text-uppercase" style="font-size:10px;letter-spacing:0.05em;">Z Endstop Position</small>
                                 <button type="button" class="btn btn-success btn-sm" id="set-endstop-position" title="Set current position as axiscope endstop position">
@@ -202,23 +688,34 @@
                             </div>
                         </div>
                     </div>
-                    <!-- -------------------------- positioning ------------------- -->
                 </div>
             </div>
-            <div class="col p-3">
-                <div class="border border-secondary-subtle rounded bg-body-tertiary p-2 mb-3">
-                <div class="row p-2 pb-2">
-                    <div class="col-9">
-                    <input type="text" class="w-100 form-control" placeholder="" id="gcode-input">
+
+            <div class="col-12 col-xxl-5">
+                <div class="workspace-panel padded mb-4">
+                    <div class="panel-header compact">
+                        <div>
+                            <div class="eyebrow">Printer console</div>
+                            <h2>Send manual G-code</h2>
+                        </div>
                     </div>
-                    <div class="col-3">
-                    <button type="button" class="btn btn-dark w-100" id="gcode-send">Send</button>
+                    <div class="command-input-row">
+                        <input type="text" class="w-100 form-control" placeholder="Type a single command or macro" id="gcode-input">
+                        <button type="button" class="btn" id="gcode-send">Send</button>
                     </div>
                 </div>
+
+                <div class="workspace-panel padded">
+                    <div class="panel-header compact">
+                        <div>
+                            <div class="eyebrow">Tool calibration</div>
+                            <h2>Offsets &amp; capture</h2>
+                            <p class="panel-note">Current values, measured contact, and copy-ready suggestions live here.</p>
+                        </div>
+                        <span class="status-chip">Live data</span>
+                    </div>
+                    <ul class="list-group tool-list" id="tool-list"></ul>
                 </div>
-
-                <ul class="list-group" id="tool-list"></ul>
-
             </div>
         </div>
     </div>

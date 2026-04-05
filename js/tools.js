@@ -1,81 +1,62 @@
-
 const zeroListItem = ({tool_number, disabled, tc_disabled}) => `
-<li class="list-group-item bg-body-tertiary p-2">
-  <div class="container">
-    <div class="row">
-      <div class="col-2">
-        <button 
-          type="button"
-          class="btn btn-secondary btn-sm w-100 h-100 ${tc_disabled}"
-          id="toolchange"
-          name="T${tool_number}"
-          data-tool="${tool_number}"
-        >
-          <h1>T${tool_number}</h1>
-        </button>
-      </div>
+<li class="list-group-item tool-list-item">
+  <div class="tool-card">
+    <div class="tool-card-top">
+      <button 
+        type="button"
+        class="btn tool-badge ${tc_disabled}"
+        id="toolchange"
+        name="T${tool_number}"
+        data-tool="${tool_number}"
+      >
+        T${tool_number}
+      </button>
 
-      <div class="col-6" >
-        <button 
-          type="button" 
-          class="btn btn-sm btn-secondary fs-6 border text-center h-100 w-100 ps-5 pe-5 ${disabled}" 
-          style="padding-bottom:5px; padding-top:5px;" 
-          id="capture-pos"
-          >
-            CAPTURE <br/> CURRENT <br/> POSITION
-          </button>
-      </div>
+      <button 
+        type="button" 
+        class="btn capture-btn ${disabled}" 
+        id="capture-pos"
+      >
+        <div>
+          <i class="bi bi-crosshair2 d-block mb-2 fs-3"></i>
+          Capture current position
+        </div>
+      </button>
 
-      <div class="col-4 border rounded bg-dark">
-        <div class="row">
-          <span class="fs-6 lh-sm pt-1 pb-1"><small>Captured Position</small></span>
-          <div class="row justify-content-center">
-            <div class="col-1 ms-4">
-              <span class="fs-5 lh-sm"><small>X:</small></span>
-            </div>
-            <div class="col-6">
-              <span class="fs-5 lh-sm" id="captured-x" data-axis="x"><small></small></span>
-            </div>
+      <div class="tool-measurement-card">
+        <div class="tool-section-title">Reference capture</div>
+        <div class="tool-metric-grid">
+          <div class="tool-metric">
+            <span class="tool-metric-label">Captured X</span>
+            <span class="tool-metric-value" id="captured-x" data-axis="x"><span></span></span>
           </div>
-          <div class="row justify-content-center">
-            <div class="col-1 ms-4">
-              <span class="fs-5 lh-sm"><small>Y:</small></span>
-            </div>
-            <div class="col-6">
-              <span class="fs-5 lh-sm" id="captured-y" data-axis="y"><small></small></span>
-            </div>
+          <div class="tool-metric">
+            <span class="tool-metric-label">Captured Y</span>
+            <span class="tool-metric-value" id="captured-y" data-axis="y"><span></span></span>
           </div>
-          <div class="row justify-content-center">
-            <div class="col-1 ms-4">
-              <span class="fs-5 lh-sm"><small>Z:</small></span>
-            </div>
-            <div class="col-6">
-              <span class="fs-5 lh-sm" id="captured-z" data-axis="z"><small></small></span>
-            </div>
+          <div class="tool-metric">
+            <span class="tool-metric-label">Captured Z</span>
+            <span class="tool-metric-value" id="captured-z" data-axis="z"><span></span></span>
           </div>
-          <div class="row justify-content-center z-fields d-none">
-            <div class="col-4">
-              <span class="fs-6 lh-sm"><small>Contact Z:</small></span>
-            </div>
-            <div class="col-6">
-              <span class="fs-5 lh-sm" id="T${tool_number}-z-trigger"><small>-</small></span>
-            </div>
+          <div class="tool-metric z-fields d-none">
+            <span class="tool-metric-label">Contact Z</span>
+            <span class="tool-metric-value is-highlight" id="T${tool_number}-z-trigger"><span>-</span></span>
           </div>
-          <div class="row justify-content-center z-fields d-none">
-            <div class="col-4">
-              <span class="fs-6 lh-sm"><small>Source:</small></span>
-            </div>
-            <div class="col-6">
-              <span class="fs-5 lh-sm" id="T${tool_number}-z-source"><small>-</small></span>
-            </div>
+          <div class="tool-metric z-fields d-none">
+            <span class="tool-metric-label">Source</span>
+            <span class="tool-metric-value" id="T${tool_number}-z-source"><span>-</span></span>
           </div>
-          <div class="row justify-content-center cartographer-fields d-none" id="T${tool_number}-touch-model-row">
-            <div class="col-4">
-              <span class="fs-6 lh-sm"><small>Touch Model:</small></span>
-            </div>
-            <div class="col-6">
-              <span class="fs-5 lh-sm" id="T${tool_number}-touch-model-z-offset"><small>-</small></span>
-            </div>
+          <div class="tool-metric cartographer-summary-row d-none" id="T${tool_number}-backend-row">
+            <span class="tool-metric-label">Backend</span>
+            <span class="tool-metric-value" id="T${tool_number}-backend"><span>-</span></span>
+          </div>
+          <div class="tool-metric cartographer-summary-row d-none" id="T${tool_number}-reference-row">
+            <span class="tool-metric-label">Reference</span>
+            <span class="tool-metric-value" id="T${tool_number}-reference"><span>-</span></span>
+          </div>
+          <div class="tool-metric cartographer-summary-row d-none" id="T${tool_number}-touch-model-row">
+            <span class="tool-metric-label">Touch Model z offset</span>
+            <span class="tool-metric-value" id="T${tool_number}-touch-model-z-offset"><span>-</span></span>
           </div>
         </div>
       </div>
@@ -84,120 +65,115 @@ const zeroListItem = ({tool_number, disabled, tc_disabled}) => `
 </li>
 `;
 
-const nonZeroListItem = ({tool_number, cx_offset, cy_offset, disabled, tc_disabled}) => `
-<li class="list-group-item bg-body-tertiary p-2">
-  <div class="container">
-    <div class="row">
-      <div class="col-2">
-        <button 
-          type="button"
-          class="btn btn-secondary btn-sm w-100 h-100 ${tc_disabled}"
-          id="toolchange"
-          name="T${tool_number}"
-          data-tool="${tool_number}"
-        >
-          <h1>T${tool_number}</h1>
-        </button>
-      </div>
+const nonZeroListItem = ({tool_number, cx_offset, cy_offset, cz_offset, disabled, tc_disabled}) => `
+<li class="list-group-item tool-list-item">
+  <div class="tool-card">
+    <div class="tool-card-top">
+      <button 
+        type="button"
+        class="btn tool-badge ${tc_disabled}"
+        id="toolchange"
+        name="T${tool_number}"
+        data-tool="${tool_number}"
+      >
+        T${tool_number}
+      </button>
 
-      <div class="col-6">
-        <div class="row pb-4">
-            <div class="input-group ps-1 pe-1">
-              <button 
-                class="btn btn-secondary ${disabled}" 
-                type="button" 
-                id="T${tool_number}-fetch-x" 
-                data-axis="x" 
-                data-tool="${tool_number}" 
-              >X</button>
-              <input 
-                type="number" 
-                name="T${tool_number}-x-pos"
-                class="form-control" 
-                placeholder="0.0" 
-                aria-label="Grab Current X Position" 
-                aria-describedby="x-axis" 
-                data-axis="x" 
-                data-tool="${tool_number}" 
-                ${disabled}
-              >
-            </div>
-        </div>
+      <div class="tool-input-card">
+        <div class="tool-section-title">Alignment inputs</div>
+        <div class="tool-axis-inputs">
+          <div class="input-group">
+            <button 
+              class="btn axis-fetch ${disabled}" 
+              type="button" 
+              id="T${tool_number}-fetch-x" 
+              data-axis="x" 
+              data-tool="${tool_number}" 
+            >X</button>
+            <input 
+              type="number" 
+              name="T${tool_number}-x-pos"
+              class="form-control" 
+              placeholder="0.0" 
+              aria-label="Grab Current X Position" 
+              aria-describedby="x-axis" 
+              data-axis="x" 
+              data-tool="${tool_number}" 
+              ${disabled}
+            >
+          </div>
 
-        <div class="row">
-            <div class="input-group ps-1 pe-1">
-              <button 
-                class="btn btn-secondary ${disabled}" 
-                type="button" 
-                id="T${tool_number}-fetch-y" 
-                data-axis="y" 
-                data-tool="${tool_number}" 
-              >Y</button>
-              <input 
-                type="number" 
-                name="T${tool_number}-y-pos"
-                class="form-control" 
-                placeholder="0.0" 
-                aria-label="Grab Current Y Position" 
-                aria-describedby="y-axis" 
-                data-axis="y" 
-                data-tool="${tool_number}" 
-                ${disabled}
-              >
-            </div>
+          <div class="input-group">
+            <button 
+              class="btn axis-fetch ${disabled}" 
+              type="button" 
+              id="T${tool_number}-fetch-y" 
+              data-axis="y" 
+              data-tool="${tool_number}" 
+            >Y</button>
+            <input 
+              type="number" 
+              name="T${tool_number}-y-pos"
+              class="form-control" 
+              placeholder="0.0" 
+              aria-label="Grab Current Y Position" 
+              aria-describedby="y-axis" 
+              data-axis="y" 
+              data-tool="${tool_number}" 
+              ${disabled}
+            >
+          </div>
         </div>
       </div>
 
-      <div class="col-4 border rounded bg-dark">
-        <div class="row">
-          <div class="col-6 pt-1 pb-1">
-            <div class="row pb-1">
-              <span class="fs-6 lh-sm text-secondary"><small>Current X</small></span>
-              <span class="fs-5 lh-sm text-secondary" id="T${tool_number}-x-offset"><small>${cx_offset}</small></span>
-            </div>
-            <div class="row">
-              <span class="fs-6 lh-sm text-secondary"><small>Current Y</small></span>
-              <span class="fs-5 lh-sm text-secondary" id="T${tool_number}-y-offset"><small>${cy_offset}</small></span>
-            </div>
-            <div class="z-fields d-none">
-              <div class="row">
-                <span class="fs-6 lh-sm text-secondary"><small>Contact Z</small></span>
-                <span class="fs-5 lh-sm text-secondary" id="T${tool_number}-z-trigger"><small>-</small></span>
+      <div class="tool-measurement-card">
+        <div class="tool-columns">
+          <div class="tool-column">
+            <div class="tool-section-title">Current</div>
+            <div class="tool-metric-grid">
+              <div class="tool-metric">
+                <span class="tool-metric-label">Current X</span>
+                <span class="tool-metric-value" id="T${tool_number}-x-offset"><span>${cx_offset}</span></span>
               </div>
-              <div class="row">
-                <span class="fs-6 lh-sm text-secondary"><small>Source</small></span>
-                <span class="fs-5 lh-sm text-secondary" id="T${tool_number}-z-source"><small>-</small></span>
+              <div class="tool-metric">
+                <span class="tool-metric-label">Current Y</span>
+                <span class="tool-metric-value" id="T${tool_number}-y-offset"><span>${cy_offset}</span></span>
               </div>
-              <div class="row cartographer-fields d-none" id="T${tool_number}-touch-model-row">
-                <span class="fs-6 lh-sm text-secondary"><small>Touch Model</small></span>
-                <span class="fs-5 lh-sm text-secondary" id="T${tool_number}-touch-model-z-offset"><small>-</small></span>
+              <div class="tool-metric z-fields d-none">
+                <span class="tool-metric-label">Current Z</span>
+                <span class="tool-metric-value" id="T${tool_number}-z-offset-current"><span>${cz_offset}</span></span>
+              </div>
+              <div class="tool-metric z-fields d-none">
+                <span class="tool-metric-label">Source</span>
+                <span class="tool-metric-value" id="T${tool_number}-z-source"><span>-</span></span>
               </div>
             </div>
           </div>
 
-          <div class="col-6 pt-2 pb-2 getGcodes" toolId="${tool_number}">
-            <div class="row pb-1">
-              <span class="fs-6 lh-sm"><small>New X</small></span>
-              <span class="fs-5 lh-sm" id="T${tool_number}-x-new"><small>0.0</small></span>
+          <div class="tool-column getGcodes" toolId="${tool_number}">
+            <div class="tool-section-title">Suggested</div>
+            <div class="tool-metric-grid">
+              <div class="tool-metric">
+                <span class="tool-metric-label">New X</span>
+                <span class="tool-metric-value is-highlight" id="T${tool_number}-x-new"><span>0.0</span></span>
+              </div>
+              <div class="tool-metric">
+                <span class="tool-metric-label">New Y</span>
+                <span class="tool-metric-value is-highlight" id="T${tool_number}-y-new"><span>0.0</span></span>
+              </div>
+              <div class="tool-metric">
+                <span class="tool-metric-label">Suggested Z</span>
+                <span class="tool-metric-value is-highlight" id="T${tool_number}-z-new"><span>0.0</span></span>
+              </div>
             </div>
-            <div class="row pb-1">
-              <span class="fs-6 lh-sm"><small>New Y</small></span>
-              <span class="fs-5 lh-sm" id="T${tool_number}-y-new"><small>0.0</small></span>
-            </div>
-            <div class="row pb-1">
-              <span class="fs-6 lh-sm"><small>Suggested Z</small></span>
-              <span class="fs-5 lh-sm" id="T${tool_number}-z-new"><small>0.0</small></span>
-            </div>
-            <div class="row text-end">
-              <button 
-                class="btn btn-link btn-sm p-0" 
-                id="T${tool_number}-copy-all" 
-                title="Copy all offsets"
-              >
-              Copy
-                <i class="bi bi-clipboard-data fs-5"></i>
-              </button>
-            </div>
+            <button 
+              class="btn copy-btn mt-3" 
+              id="T${tool_number}-copy-all" 
+              title="Copy all offsets"
+            >
+              Copy offsets
+              <i class="bi bi-clipboard-data fs-5"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -205,30 +181,24 @@ const nonZeroListItem = ({tool_number, cx_offset, cy_offset, disabled, tc_disabl
   </div>
 </li>
 `;
-
 
 function toolChangeURL(tool) {
   var x_pos = $("#captured-x").find(":first-child").text();
   var y_pos = $("#captured-y").find(":first-child").text();
   var z_pos = $("#captured-z").find(":first-child").text();
 
-  // Convert to numbers and validate
   x_pos = parseFloat(x_pos);
   y_pos = parseFloat(y_pos);
   z_pos = parseFloat(z_pos);
 
-  // Check if we have valid numbers for all positions
   if (isNaN(x_pos) || isNaN(y_pos) || isNaN(z_pos)) {
-    // Even without positions, we still need the proper macro sequence
     var url = printerUrl(printerIp, "/printer/gcode/script?script=AXISCOPE_BEFORE_PICKUP_GCODE");
     url = url + "%0AT" + tool;
     url = url + "%0AAXISCOPE_AFTER_PICKUP_GCODE";
     return url;
   }
 
-  // For T0, always use captured position without offsets
   if (tool !== "0") {
-    // Get the position values directly from the inputs
     var tool_x = parseFloat($("input[name=T"+tool+"-x-pos]").val()) || 0.0;
     var tool_y = parseFloat($("input[name=T"+tool+"-y-pos]").val()) || 0.0;
 
@@ -238,21 +208,13 @@ function toolChangeURL(tool) {
     }
   }
   
-  // Format positions to 3 decimal places
   x_pos = x_pos.toFixed(3);
   y_pos = y_pos.toFixed(3);
   z_pos = z_pos.toFixed(3);
 
-  // Start with AXISCOPE_BEFORE_PICKUP_GCODE macro
   var url = printerUrl(printerIp, "/printer/gcode/script?script=AXISCOPE_BEFORE_PICKUP_GCODE");
-  
-  // Perform the tool change
   url = url + "%0AT" + tool;
-  
-  // Run AXISCOPE_AFTER_PICKUP_GCODE macro
   url = url + "%0AAXISCOPE_AFTER_PICKUP_GCODE";
-  
-  // Add the movement commands
   url = url + "%0ASAVE_GCODE_STATE NAME=RESTORE_POS";
   url = url + "%0AG90";
   url = url + "%0AG0 Z" + z_pos + " F3000";
@@ -265,13 +227,13 @@ function toolChangeURL(tool) {
 function formatProbeSource(source) {
   switch (source) {
     case 'cartographer_touch':
-      return 'Cartographer Touch';
+      return 'Cartographer Touch Probe';
     case 'cartographer_touch_reference':
-      return 'Cartographer Ref';
+      return 'Cartographer Touch Home';
     case 'switch_probe':
-      return 'Z Switch';
+      return 'Z Switch Probe';
     case 'switch_probe_reference':
-      return 'Z Switch Ref';
+      return 'Z Switch Home';
     default:
       return source ? source.replace(/_/g, ' ') : '-';
   }
@@ -281,11 +243,70 @@ function isCartographerSource(source) {
   return typeof source === 'string' && source.startsWith('cartographer');
 }
 
+function formatBackend(source) {
+  if (isCartographerSource(source)) {
+    return 'Cartographer';
+  }
+  if (typeof source === 'string' && source.startsWith('switch')) {
+    return 'Z Switch';
+  }
+  return '-';
+}
+
+function applyToolGridLayout(toolCount) {
+  const $toolList = $('#tool-list');
+  $toolList.removeClass('tool-grid-2 tool-grid-3');
+  if (toolCount >= 5) {
+    $toolList.addClass('tool-grid-3');
+  } else {
+    $toolList.addClass('tool-grid-2');
+  }
+}
+
+function ensureToolHeaderActions() {
+  let $actions = $('#tool-header-actions');
+  if ($actions.length) {
+    return $actions;
+  }
+
+  const $statusChip = $('.status-chip').last();
+  if (!$statusChip.length) {
+    return $();
+  }
+
+  $actions = $('<div id="tool-header-actions" class="d-flex align-items-center gap-2 flex-wrap justify-content-end"></div>');
+  const $buttonSlot = $('<div id="calibrate-all-slot"></div>');
+  $statusChip.before($actions);
+  $actions.append($buttonSlot);
+  $actions.append($statusChip);
+  return $actions;
+}
+
+function renderCalibrateButton(isEnabled = false) {
+  ensureToolHeaderActions();
+  const buttonClass = isEnabled ? 'btn-primary' : 'btn-secondary';
+  const disabledAttr = isEnabled ? '' : 'disabled';
+  const html = `
+    <button 
+      type="button" 
+      class="btn btn-sm ${buttonClass}"
+      onclick="calibrateAllTools()"
+      ${disabledAttr}
+      id="calibrate-all-btn"
+      style="border-radius:999px;font-weight:700;padding:8px 14px;white-space:nowrap;"
+      title="Run Z offset calibration for all tools"
+    >
+      Calibrate all Z offsets
+    </button>
+  `;
+  $('#calibrate-all-slot').html(html);
+}
+
 function getProbeResults() {
   var url = printerUrl(printerIp, "/printer/objects/query?axiscope");
   return $.get(url).then(function(data) {
     const hasProbeResults = data.result?.status?.axiscope?.probe_results != null;
-    // Update calibration button state
+    renderCalibrateButton(hasProbeResults);
     const $calibrateBtn = $('#calibrate-all-btn');
     if ($calibrateBtn.length) {
       if (hasProbeResults) {
@@ -301,6 +322,7 @@ function getProbeResults() {
     return {};
   }).catch(function(error) {
     console.error('Error fetching probe results:', error);
+    renderCalibrateButton(false);
     return {};
   });
 }
@@ -313,39 +335,48 @@ function updateProbeResults(tool_number, probeResults) {
     const source = result.source ?? '';
     const touchModelZOffset = result.touch_model_z_offset;
 
-    if (measuredZ != null && !isNaN(measuredZ)) {
-      $(`#T${tool_number}-z-trigger`).find('>:first-child').text(Number(measuredZ).toFixed(3));
+    if (`${tool_number}` === '0' || tool_number === 0) {
+      if (measuredZ != null && !isNaN(measuredZ)) {
+        $(`#T${tool_number}-z-trigger`).find('>:first-child').text(Number(measuredZ).toFixed(3));
+      }
     }
 
     $(`#T${tool_number}-z-source`).find('>:first-child').text(formatProbeSource(source));
 
-    if (touchModelZOffset != null && isCartographerSource(source)) {
-      $(`#T${tool_number}-touch-model-z-offset`).find('>:first-child').text(Number(touchModelZOffset).toFixed(3));
-      $(`#T${tool_number}-touch-model-row`).removeClass('d-none');
-    } else {
-      $(`#T${tool_number}-touch-model-row`).addClass('d-none');
+    if (`${tool_number}` === '0' || tool_number === 0) {
+      const backendText = formatBackend(source);
+      $(`#T${tool_number}-backend`).find('>:first-child').text(backendText);
+      $(`#T${tool_number}-reference`).find('>:first-child').text(`T${tool_number}`);
+
+      if (backendText !== '-') {
+        $(`#T${tool_number}-backend-row`).removeClass('d-none');
+        $(`#T${tool_number}-reference-row`).removeClass('d-none');
+      } else {
+        $(`#T${tool_number}-backend-row`).addClass('d-none');
+        $(`#T${tool_number}-reference-row`).addClass('d-none');
+      }
+
+      if (touchModelZOffset != null && isCartographerSource(source)) {
+        $(`#T${tool_number}-touch-model-z-offset`).find('>:first-child').text(Number(touchModelZOffset).toFixed(3));
+        $(`#T${tool_number}-touch-model-row`).removeClass('d-none');
+      } else {
+        $(`#T${tool_number}-touch-model-row`).addClass('d-none');
+      }
     }
     
-    // Update Suggested Z only for non-zero tools
     if (tool_number !== '0' && tool_number !== 0 && suggestedZ != null && !isNaN(suggestedZ)) {
       $(`#T${tool_number}-z-new`).find('>:first-child').text(Number(suggestedZ).toFixed(3));
     }
   }
 }
 
-// Start periodic probe results updates
 function startProbeResultsUpdates() {
-  // Update immediately
   updateAllProbeResults();
-  
-  // Then update every 2 seconds
   setInterval(updateAllProbeResults, 2000);
 }
 
-// Function to update all probe results
 function updateAllProbeResults() {
   getProbeResults().then(function(probeResults) {
-    // Get all tool numbers from the page
     const toolButtons = document.querySelectorAll('button[id="toolchange"]');
     toolButtons.forEach(button => {
       const toolNumber = button.getAttribute('data-tool');
@@ -354,31 +385,6 @@ function updateAllProbeResults() {
       }
     });
   });
-}
-
-function calibrateButton(isEnabled = false) {
-  const buttonClass = isEnabled ? 'btn-primary' : 'btn-secondary';
-  const disabledAttr = isEnabled ? '' : 'disabled';
-  return `
-<li class="list-group-item bg-body-tertiary p-2">
-  <div class="container">
-    <div class="row">
-      <div class="col-12" >
-        <button 
-          type="button" 
-          class="btn btn-sm ${buttonClass} fs-6 border text-center h-100 w-100" 
-          style="padding-top:15px;" 
-          onclick="calibrateAllTools()"
-          ${disabledAttr}
-          id="calibrate-all-btn"
-        >
-          CALIBRATE ALL Z-OFFSETS
-        </button>
-      </div>
-    </div>
-  </div>
-</li>
-`;
 }
 
 function calibrateAllTools() {
@@ -417,6 +423,7 @@ function getTools() {
         var tool_number = data['result']['status'][tool_names[i]]['tool_number'];
         var cx_offset   = data['result']['status'][tool_names[i]]['gcode_x_offset'].toFixed(3);
         var cy_offset   = data['result']['status'][tool_names[i]]['gcode_y_offset'].toFixed(3);
+        var cz_offset   = (data['result']['status'][tool_names[i]]['gcode_z_offset'] ?? 0.0).toFixed(3);
         var disabled    = "";
         var tc_disabled = "disabled";
 
@@ -428,17 +435,13 @@ function getTools() {
         if (tool_number === 0) {
           $("#tool-list").append(zeroListItem({tool_number: tool_number, disabled: disabled, tc_disabled: tc_disabled}));
         } else {
-          $("#tool-list").append(nonZeroListItem({tool_number: tool_number, cx_offset: cx_offset, cy_offset: cy_offset, disabled: disabled, tc_disabled: tc_disabled}));
+          $("#tool-list").append(nonZeroListItem({tool_number: tool_number, cx_offset: cx_offset, cy_offset: cy_offset, cz_offset: cz_offset, disabled: disabled, tc_disabled: tc_disabled}));
         }
       });
 
-      // Add calibration button after all tools
-      getProbeResults().then(results => {
-        const hasProbeResults = Object.keys(results).length > 0;
-        $("#tool-list").append(calibrateButton(hasProbeResults));
-      });
+      applyToolGridLayout(tool_numbers.length);
+      getProbeResults();
       
-      // Check if axiscope is available
       $.get(printerUrl(printerIp, "/printer/objects/query?axiscope")).then(function(data) {
         const hasProbeResults = data.result?.status?.axiscope?.probe_results != null;
         if (hasProbeResults) {
@@ -448,12 +451,9 @@ function getTools() {
         console.error('Error checking axiscope availability:', error);
       });
 
-      // Set up copy handlers for all tools
       tool_numbers.forEach(tool => {
         $(`#T${tool}-copy-all`).off('click').on('click', function() {
           const $this = $(this);
-          
-          // Get X/Y offsets
           const xOffset = $(`#T${tool}-x-new`).find('>:first-child').text();
           const yOffset = $(`#T${tool}-y-new`).find('>:first-child').text();
           let gcodeCommands = [
@@ -461,7 +461,6 @@ function getTools() {
             `gcode_y_offset: ${yOffset}`
           ];
           
-          // Check if axiscope is available before including Z offset
           $.get(printerUrl(printerIp, "/printer/objects/query?axiscope")).then(data => {
             const hasProbeResults = data.result?.status?.axiscope?.probe_results != null;
             if (hasProbeResults) {
@@ -469,7 +468,6 @@ function getTools() {
               gcodeCommands.push(`gcode_z_offset: ${zValue}`);
             }
             
-            // Create temporary textarea
             const textarea = document.createElement('textarea');
             textarea.value = gcodeCommands.join('\n');
             textarea.style.position = 'fixed';
@@ -497,12 +495,9 @@ function getTools() {
     });
 
     updateTools(tool_numbers, active_tool);
-    
-    // Start periodic updates after initial tool load
     startProbeResultsUpdates();
   });
 }
-
 
 function updateTools(tool_numbers, tn){
   const $captureBtn = $("#capture-pos");
@@ -533,19 +528,16 @@ function updateTools(tool_numbers, tn){
   });
 }
 
-
 function updateOffset(tool, axis) {
     var position = parseFloat($("input[name=T"+tool+"-"+axis+"-pos]").val()) || 0.0;
     var captured_pos = $("#captured-"+axis).text();
 
-    // Only calculate new offset if this axis position is set and we have a captured position
     if (position !== 0.0 && captured_pos !== "") {
         captured_pos = parseFloat(captured_pos);
         var old_offset = parseFloat($("#T"+tool+"-"+axis+"-offset").text());
 
         var new_offset = (captured_pos-old_offset) - position;
         
-        // Modify new_offset for display
         if (new_offset < 0) {
             new_offset = Math.abs(new_offset);
         } else {
@@ -556,7 +548,6 @@ function updateOffset(tool, axis) {
         if(new_offset == old_offset){
             offset_delta = 0;
         }else{
-            // For delta: if new is more negative than old, it's negative delta
             offset_delta = Math.abs(new_offset) > Math.abs(old_offset) ? 
                 -(Math.abs(new_offset) - Math.abs(old_offset)) : 
                 Math.abs(old_offset) - Math.abs(new_offset);
@@ -564,11 +555,9 @@ function updateOffset(tool, axis) {
 
         const newOffsetText = new_offset.toFixed(3);
         
-        // Update display
         $(`#T${tool}-${axis}-new`).attr('delta', offset_delta);
         $(`#T${tool}-${axis}-new`).find('>:first-child').text(newOffsetText);
     } else {
-        // Reset to 0.0 if position is not set or no captured position
         $(`#T${tool}-${axis}-new`).attr('delta', 0);
         $(`#T${tool}-${axis}-new`).find('>:first-child').text('0.0');
     }
