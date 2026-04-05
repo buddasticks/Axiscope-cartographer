@@ -52,3 +52,87 @@
     pointer-events: none;
     filter: drop-shadow(0 0 14px rgba(255, 0, 0, 0.08));
 }
+
+/* Second-pass layout overrides for the refreshed tool cards */
+@media (min-width: 1200px) {
+    .tool-card-top {
+        grid-template-columns: 84px minmax(260px, 1fr) !important;
+        align-items: start;
+    }
+
+    .tool-measurement-card {
+        grid-column: 1 / -1;
+    }
+
+    .tool-columns {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+    }
+
+    .tool-input-card {
+        min-height: 168px;
+    }
+}
+
+.tool-card {
+    padding: 18px;
+}
+
+.tool-card-top {
+    gap: 16px;
+}
+
+.tool-section-title {
+    margin-bottom: 10px;
+}
+
+.tool-metric-grid {
+    gap: 10px;
+}
+
+.tool-metric {
+    align-items: center;
+    min-height: 54px;
+    gap: 10px;
+}
+
+.tool-metric-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    line-height: 1.2;
+    font-size: 0.68rem;
+}
+
+.tool-metric-value {
+    flex: 0 0 auto;
+    max-width: 48%;
+    line-height: 1.1;
+    font-size: 0.98rem;
+    word-break: break-word;
+}
+
+.tool-input-card .form-control {
+    min-width: 0;
+}
+
+.copy-btn {
+    min-height: 46px;
+}
+
+@media (max-width: 1199px) {
+    .tool-columns {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .tool-metric {
+        flex-wrap: wrap;
+    }
+
+    .tool-metric-value {
+        max-width: 100%;
+        width: 100%;
+        text-align: left;
+    }
+}
