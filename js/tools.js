@@ -65,7 +65,7 @@ const zeroListItem = ({tool_number, disabled, tc_disabled}) => `
 </li>
 `;
 
-const nonZeroListItem = ({tool_number, cx_offset, cy_offset, disabled, tc_disabled}) => `
+const nonZeroListItem = ({tool_number, cx_offset, cy_offset, cz_offset, disabled, tc_disabled}) => `
 <li class="list-group-item tool-list-item">
   <div class="tool-card">
     <div class="tool-card-top">
@@ -140,8 +140,8 @@ const nonZeroListItem = ({tool_number, cx_offset, cy_offset, disabled, tc_disabl
                 <span class="tool-metric-value" id="T${tool_number}-y-offset"><span>${cy_offset}</span></span>
               </div>
               <div class="tool-metric z-fields d-none">
-                <span class="tool-metric-label">Contact Z</span>
-                <span class="tool-metric-value is-highlight" id="T${tool_number}-z-trigger"><span>-</span></span>
+                <span class="tool-metric-label">Current Z</span>
+                <span class="tool-metric-value" id="T${tool_number}-z-offset-current"><span>${cz_offset}</span></span>
               </div>
               <div class="tool-metric z-fields d-none">
                 <span class="tool-metric-label">Source</span>
@@ -335,8 +335,10 @@ function updateProbeResults(tool_number, probeResults) {
     const source = result.source ?? '';
     const touchModelZOffset = result.touch_model_z_offset;
 
-    if (measuredZ != null && !isNaN(measuredZ)) {
-      $(`#T${tool_number}-z-trigger`).find('>:first-child').text(Number(measuredZ).toFixed(3));
+    if (`${tool_number}` === '0' || tool_number === 0) {
+      if (measuredZ != null && !isNaN(measuredZ)) {
+        $(`#T${tool_number}-z-trigger`).find('>:first-child').text(Number(measuredZ).toFixed(3));
+      }
     }
 
     $(`#T${tool_number}-z-source`).find('>:first-child').text(formatProbeSource(source));
@@ -421,6 +423,7 @@ function getTools() {
         var tool_number = data['result']['status'][tool_names[i]]['tool_number'];
         var cx_offset   = data['result']['status'][tool_names[i]]['gcode_x_offset'].toFixed(3);
         var cy_offset   = data['result']['status'][tool_names[i]]['gcode_y_offset'].toFixed(3);
+        var cz_offset   = (data['result']['status'][tool_names[i]]['gcode_z_offset'] ?? 0.0).toFixed(3);
         var disabled    = "";
         var tc_disabled = "disabled";
 
@@ -432,7 +435,7 @@ function getTools() {
         if (tool_number === 0) {
           $("#tool-list").append(zeroListItem({tool_number: tool_number, disabled: disabled, tc_disabled: tc_disabled}));
         } else {
-          $("#tool-list").append(nonZeroListItem({tool_number: tool_number, cx_offset: cx_offset, cy_offset: cy_offset, disabled: disabled, tc_disabled: tc_disabled}));
+          $("#tool-list").append(nonZeroListItem({tool_number: tool_number, cx_offset: cx_offset, cy_offset: cy_offset, cz_offset: cz_offset, disabled: disabled, tc_disabled: tc_disabled}));
         }
       });
 
