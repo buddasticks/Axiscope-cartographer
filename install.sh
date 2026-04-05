@@ -3,7 +3,7 @@
 # Default values
 AXISCOPE_ENV="axiscope-env"
 INSTALL_DIR="$HOME/axiscope"
-REPO_URL="https://github.com/nic335/Axiscope.git"
+REPO_URL="https://github.com/buddasticks/Axiscope.git"
 BRANCH="main"
 
 # Parse command line arguments
@@ -22,6 +22,7 @@ done
 
 cd ~
 echo "Installing AxisScope..."
+echo "Using repository: ${REPO_URL}"
 echo "Using branch: ${BRANCH}"
 
 # Check for existing installation
