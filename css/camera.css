@@ -73,6 +73,7 @@
     .app-shell > .row {
         height: calc(100vh - 22px) !important;
         align-items: stretch !important;
+        justify-content: center !important;
         --bs-gutter-x: 0.85rem !important;
         --bs-gutter-y: 0.85rem !important;
     }
@@ -80,6 +81,9 @@
     .col-12.col-xxl-7,
     .col-12.col-xxl-5 {
         height: 100% !important;
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+        width: 50% !important;
     }
 
     .col-12.col-xxl-5 {
