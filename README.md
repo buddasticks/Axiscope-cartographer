@@ -84,7 +84,7 @@ If you want to use automatic Z calibration, choose one of the following:
 Quick installation using curl:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/buddasticks/Axiscope/refs/heads/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/buddasticks/Axiscope-cartographer/refs/heads/main/install.sh | bash
 ```
 
 The install script will:
