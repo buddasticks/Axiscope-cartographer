@@ -29,6 +29,7 @@ class Axiscope:
         self.touch_home_gcode = config.get('touch_home_gcode', 'CARTOGRAPHER_TOUCH_HOME')
         self.touch_probe_gcode = config.get('touch_probe_gcode', 'CARTOGRAPHER_TOUCH_PROBE')
         self.use_current_z_offsets = config.getboolean('use_current_z_offsets', True)
+        self.cartographer_touch_model_z_offset = 0.0
 
         self.lift_z = config.getfloat('lift_z', 1)
         self.move_speed = config.getint('move_speed', 60)
@@ -124,18 +125,51 @@ class Axiscope:
             desc=self.cmd_AXISCOPE_SET_ENDSTOP_POSITION_help
         )
 
+    def _load_cartographer_touch_model_z_offset(self):
+        if self.config_file_path is None or not os.path.exists(self.config_file_path):
+            return 0.0
+
+        section_prefixes = (
+            '#*# [cartographer touch_model ',
+            '#*# [scanner touch_model ',
+        )
+        in_touch_model = False
+
+        try:
+            with open(self.config_file_path, 'r') as f:
+                for raw_line in f:
+                    line = raw_line.strip()
+                    if any(line.startswith(prefix) for prefix in section_prefixes):
+                        in_touch_model = True
+                        continue
+                    if in_touch_model and line.startswith('#*# ['):
+                        in_touch_model = False
+                    if in_touch_model and line.startswith('#*# z_offset ='):
+                        return float(line.split('=', 1)[1].strip())
+        except Exception:
+            return 0.0
+
+        return 0.0
+
     def handle_connect(self):
         if self.config_file_path is not None:
             expanded_path = os.path.expanduser(self.config_file_path)
             self.config_file_path = expanded_path
             if os.path.exists(self.config_file_path):
                 self.has_cfg_data = True
+                if self.z_backend == 'cartographer':
+                    self.cartographer_touch_model_z_offset = self._load_cartographer_touch_model_z_offset()
                 self.gcode.respond_info(
                     "Axiscope config file found (%s)." % self.config_file_path
                 )
                 self.gcode.respond_info(
                     "--Axiscope Loaded-- (z_backend=%s)" % self.z_backend
                 )
+                if self.z_backend == 'cartographer':
+                    self.gcode.respond_info(
+                        "Axiscope Cartographer touch_model z_offset = %.5f"
+                        % self.cartographer_touch_model_z_offset
+                    )
             else:
                 self.gcode.respond_info(
                     "Could not find Axiscope config file (%s)" % self.config_file_path
@@ -166,6 +200,7 @@ class Axiscope:
             'probe_y': self.probe_y,
             'reference_tool': self.reference_tool,
             'use_current_z_offsets': self.use_current_z_offsets,
+            'cartographer_touch_model_z_offset': self.cartographer_touch_model_z_offset,
         }
 
     def run_gcode(self, name, template, extra_context):
@@ -412,12 +447,17 @@ class Axiscope:
 
             measured_z = self._get_last_z_result()
             if measured_z is None or abs(measured_z) < 1e-9:
-                measured_z = float(toolhead.get_position()[2]) - self._get_trigger_distance()
+                measured_z = (
+                    float(toolhead.get_position()[2])
+                    - self._get_trigger_distance()
+                    - self.cartographer_touch_model_z_offset
+                )
 
             if measured_z is None:
                 raise gcmd.error(
                     'Unable to read a Cartographer touch result after %s. '
-                    'Tried last_z_result and toolhead Z minus trigger_distance.'
+                    'Tried last_z_result and toolhead Z minus trigger_distance '
+                    'minus touch_model z_offset.'
                     % self.touch_probe_gcode
                 )
 
