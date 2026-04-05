@@ -84,7 +84,7 @@ If you want to use automatic Z calibration, choose one of the following:
 Quick installation using curl:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/buddasticks/Axiscope/refs/heads/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/buddasticks/Axiscope-cartographer/refs/heads/main/install.sh | bash
 ```
 
 The install script will:
@@ -93,14 +93,6 @@ The install script will:
 - Install required dependencies
 - Set up the systemd service
 - Configure Moonraker integration
-
-### Installing a non-main branch for testing
-
-If you want to install a feature branch before it is merged into `main`, use the branch-specific installer and pass the branch name:
-
-```bash
-curl -sSL https://raw.githubusercontent.com/buddasticks/Axiscope/refs/heads/cartographer-hide-z-endstop-map/install.sh | bash -s -- --branch cartographer-hide-z-endstop-map
-```
 
 ### Starting Axiscope
 
@@ -178,6 +170,66 @@ after_pickup_gcode:
 finish_gcode:
   T0
 ```
+
+#### What these Cartographer options mean
+
+- **`z_backend: cartographer`**  
+  Tells Axiscope to use the Cartographer touch workflow instead of the original physical Z-switch method.
+
+- **`probe_x_pos` / `probe_y_pos`**  
+  The XY point on the bed where all tools will be measured. Pick a safe location that every tool can reach reliably.
+
+- **`reference_tool`**  
+  The tool Axiscope uses as the baseline for Z. In most toolchanger setups this is `T0`.
+
+- **`lift_z`**  
+  How high Axiscope lifts the tool before moving around between measurements. This helps avoid dragging the nozzle across the bed.
+
+- **`move_speed`**  
+  XY travel speed, in mm/s, while moving to the Cartographer probe point.
+
+- **`z_move_speed`**  
+  Z move speed, in mm/s, used for safe lift and return moves.
+
+- **`samples`**  
+  Reserved for compatibility with Axiscope’s older switch workflow. For Cartographer, `1` is usually what you want.
+
+- **`use_current_z_offsets`**  
+  Controls how Axiscope treats the measured value:
+  - `False` = report the measured Cartographer contact value directly as the suggested `gcode_z_offset`
+  - `True` = add the measured value to the tool’s current `gcode_z_offset`
+
+  For first-time setup or re-zeroing your tools, `False` is usually the easiest and safest choice.
+
+- **`config_file_path`**  
+  Path to the Klipper config file Axiscope reads and writes. This is also where it looks for the saved Cartographer touch-model section in the `#*#` save-config block.
+
+- **`touch_home_gcode`**  
+  The command Axiscope uses to establish the reference tool’s Z zero. With Cartographer this is normally `CARTOGRAPHER_TOUCH_HOME`.
+
+- **`touch_probe_gcode`**  
+  The command Axiscope uses to measure the other tools against the same touch workflow. With Cartographer this is normally `CARTOGRAPHER_TOUCH_PROBE`.
+
+- **`start_gcode`**  
+  G-code that runs once before calibration starts. The example homes the printer, selects `T0`, and runs `QUAD_GANTRY_LEVEL` so the machine is in a known-good state before measuring tools.
+
+- **`before_pickup_gcode`**  
+  Optional macro hook that runs before each tool pickup. Leave it blank if you do not need anything special.
+
+- **`after_pickup_gcode`**  
+  Optional macro hook that runs after each tool pickup. Leave it blank if you do not need anything special.
+
+- **`finish_gcode`**  
+  G-code that runs after calibration finishes. The example reselects `T0` so the printer ends in a predictable state.
+
+#### Recommended first Cartographer setup
+
+For most new users:
+
+- set `reference_tool: 0`
+- set `use_current_z_offsets: False`
+- choose a `probe_x_pos` / `probe_y_pos` location that all tools can safely reach
+- keep `touch_home_gcode` and `touch_probe_gcode` at their default Cartographer values unless you have custom wrapper macros
 
 ### Notes for Cartographer users
 
