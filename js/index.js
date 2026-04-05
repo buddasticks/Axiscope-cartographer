@@ -48,7 +48,7 @@ function updatePage() {
 }
 
 function updateBedMap(axiscope, axis_min, axis_max, gcode_pos) {
-    if (!axiscope || !axis_min || !axis_max) {
+    if (!axiscope || !axis_min || !axis_max || axiscope.z_backend === 'cartographer') {
         $('#endstop-section').hide();
         return;
     }
