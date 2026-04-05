@@ -46,8 +46,16 @@ const zeroListItem = ({tool_number, disabled, tc_disabled}) => `
             <span class="tool-metric-label">Source</span>
             <span class="tool-metric-value" id="T${tool_number}-z-source"><span>-</span></span>
           </div>
-          <div class="tool-metric cartographer-fields d-none" id="T${tool_number}-touch-model-row">
-            <span class="tool-metric-label">Touch Model</span>
+          <div class="tool-metric cartographer-summary-row d-none" id="T${tool_number}-backend-row">
+            <span class="tool-metric-label">Backend</span>
+            <span class="tool-metric-value" id="T${tool_number}-backend"><span>-</span></span>
+          </div>
+          <div class="tool-metric cartographer-summary-row d-none" id="T${tool_number}-reference-row">
+            <span class="tool-metric-label">Reference</span>
+            <span class="tool-metric-value" id="T${tool_number}-reference"><span>-</span></span>
+          </div>
+          <div class="tool-metric cartographer-summary-row d-none" id="T${tool_number}-touch-model-row">
+            <span class="tool-metric-label">Touch Model z offset</span>
             <span class="tool-metric-value" id="T${tool_number}-touch-model-z-offset"><span>-</span></span>
           </div>
         </div>
@@ -139,10 +147,6 @@ const nonZeroListItem = ({tool_number, cx_offset, cy_offset, disabled, tc_disabl
                 <span class="tool-metric-label">Source</span>
                 <span class="tool-metric-value" id="T${tool_number}-z-source"><span>-</span></span>
               </div>
-              <div class="tool-metric cartographer-fields d-none" id="T${tool_number}-touch-model-row">
-                <span class="tool-metric-label">Touch Model</span>
-                <span class="tool-metric-value" id="T${tool_number}-touch-model-z-offset"><span>-</span></span>
-              </div>
             </div>
           </div>
 
@@ -223,13 +227,13 @@ function toolChangeURL(tool) {
 function formatProbeSource(source) {
   switch (source) {
     case 'cartographer_touch':
-      return 'Cartographer Touch';
+      return 'Cartographer Touch Probe';
     case 'cartographer_touch_reference':
-      return 'Cartographer Ref';
+      return 'Cartographer Touch Home';
     case 'switch_probe':
-      return 'Z Switch';
+      return 'Z Switch Probe';
     case 'switch_probe_reference':
-      return 'Z Switch Ref';
+      return 'Z Switch Home';
     default:
       return source ? source.replace(/_/g, ' ') : '-';
   }
@@ -237,6 +241,16 @@ function formatProbeSource(source) {
 
 function isCartographerSource(source) {
   return typeof source === 'string' && source.startsWith('cartographer');
+}
+
+function formatBackend(source) {
+  if (isCartographerSource(source)) {
+    return 'Cartographer';
+  }
+  if (typeof source === 'string' && source.startsWith('switch')) {
+    return 'Z Switch';
+  }
+  return '-';
 }
 
 function ensureToolHeaderActions() {
@@ -317,11 +331,25 @@ function updateProbeResults(tool_number, probeResults) {
 
     $(`#T${tool_number}-z-source`).find('>:first-child').text(formatProbeSource(source));
 
-    if (touchModelZOffset != null && isCartographerSource(source)) {
-      $(`#T${tool_number}-touch-model-z-offset`).find('>:first-child').text(Number(touchModelZOffset).toFixed(3));
-      $(`#T${tool_number}-touch-model-row`).removeClass('d-none');
-    } else {
-      $(`#T${tool_number}-touch-model-row`).addClass('d-none');
+    if (`${tool_number}` === '0' || tool_number === 0) {
+      const backendText = formatBackend(source);
+      $(`#T${tool_number}-backend`).find('>:first-child').text(backendText);
+      $(`#T${tool_number}-reference`).find('>:first-child').text(`T${tool_number}`);
+
+      if (backendText !== '-') {
+        $(`#T${tool_number}-backend-row`).removeClass('d-none');
+        $(`#T${tool_number}-reference-row`).removeClass('d-none');
+      } else {
+        $(`#T${tool_number}-backend-row`).addClass('d-none');
+        $(`#T${tool_number}-reference-row`).addClass('d-none');
+      }
+
+      if (touchModelZOffset != null && isCartographerSource(source)) {
+        $(`#T${tool_number}-touch-model-z-offset`).find('>:first-child').text(Number(touchModelZOffset).toFixed(3));
+        $(`#T${tool_number}-touch-model-row`).removeClass('d-none');
+      } else {
+        $(`#T${tool_number}-touch-model-row`).addClass('d-none');
+      }
     }
     
     if (tool_number !== '0' && tool_number !== 0 && suggestedZ != null && !isNaN(suggestedZ)) {
