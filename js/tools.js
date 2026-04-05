@@ -269,16 +269,18 @@ function ensureToolHeaderActions() {
     return $actions;
   }
 
-  const $statusChip = $('.status-chip').last();
-  if (!$statusChip.length) {
+  const $toolPanel = $('#tool-list').closest('.workspace-panel');
+  const $header = $toolPanel.find('.panel-header.compact').first();
+  if (!$header.length) {
     return $();
   }
 
+  $header.find('.status-chip').remove();
+
   $actions = $('<div id="tool-header-actions" class="d-flex align-items-center gap-2 flex-wrap justify-content-end"></div>');
   const $buttonSlot = $('<div id="calibrate-all-slot"></div>');
-  $statusChip.before($actions);
   $actions.append($buttonSlot);
-  $actions.append($statusChip);
+  $header.append($actions);
   return $actions;
 }
 
