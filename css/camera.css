@@ -53,70 +53,213 @@
     filter: drop-shadow(0 0 14px rgba(255, 0, 0, 0.08));
 }
 
-/* Second-pass layout overrides for the refreshed tool cards */
+/* Fit-content follow-up for the refreshed tool cards */
 @media (min-width: 1200px) {
+    .app-shell {
+        max-width: 1520px !important;
+        padding: 14px 16px 18px !important;
+    }
+
+    .row.g-4 {
+        --bs-gutter-x: 1rem !important;
+        --bs-gutter-y: 1rem !important;
+    }
+
+    .workspace-panel.padded {
+        padding: 14px !important;
+    }
+
+    .panel-header {
+        margin-bottom: 10px !important;
+        gap: 10px !important;
+    }
+
+    .panel-header h1,
+    .panel-header h2 {
+        font-size: 1.15rem !important;
+    }
+
+    .eyebrow {
+        margin-bottom: 3px !important;
+        font-size: 0.68rem !important;
+    }
+
+    .panel-note {
+        font-size: 0.8rem !important;
+    }
+
+    .command-input-row {
+        grid-template-columns: 1fr 96px !important;
+        gap: 8px !important;
+    }
+
+    .camera-toolbar .btn {
+        padding: 9px 12px !important;
+    }
+
+    #camContainer {
+        aspect-ratio: 16/10 !important;
+        max-height: 42vh !important;
+    }
+
+    .slider-card {
+        margin-top: 10px !important;
+        padding: 10px 12px !important;
+    }
+
+    .slider-row + .slider-row {
+        margin-top: 6px !important;
+    }
+
+    .telemetry-strip {
+        gap: 10px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .telemetry-pill {
+        padding: 10px 12px !important;
+        border-radius: 14px !important;
+    }
+
+    .telemetry-label {
+        font-size: 0.66rem !important;
+    }
+
+    .telemetry-value {
+        font-size: 1rem !important;
+    }
+
+    .primary-actions {
+        margin-bottom: 6px !important;
+    }
+
+    .primary-actions .btn {
+        padding-top: 0.35rem !important;
+        padding-bottom: 0.35rem !important;
+        font-size: 0.78rem !important;
+    }
+
+    .section-divider {
+        margin: 10px 0 !important;
+    }
+
+    .section-subtitle {
+        font-size: 0.65rem !important;
+        margin-bottom: 8px !important;
+    }
+
+    #BouncePositionBar,
+    #BigPositionBar {
+        margin-top: 6px !important;
+    }
+
+    #BouncePositionBar .btn,
+    #BigPositionBar .btn {
+        padding: 0.18rem 0.36rem !important;
+        font-size: 0.68rem !important;
+        line-height: 1.1 !important;
+    }
+
+    .tool-list {
+        gap: 10px !important;
+    }
+
+    .tool-card,
+    .calibrate-card {
+        padding: 12px !important;
+        border-radius: 18px !important;
+    }
+
     .tool-card-top {
-        grid-template-columns: 84px minmax(260px, 1fr) !important;
-        align-items: start;
+        grid-template-columns: 64px minmax(0, 1fr) !important;
+        gap: 10px !important;
+        align-items: start !important;
     }
 
     .tool-measurement-card {
         grid-column: 1 / -1;
+        padding: 10px !important;
     }
 
-    .tool-columns {
-        grid-template-columns: 1fr !important;
-        gap: 14px;
+    .tool-measurement-card > .tool-metric-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+    }
+
+    .tool-badge,
+    .capture-btn,
+    .tool-input-card {
+        min-height: 92px !important;
+        border-radius: 16px !important;
+    }
+
+    .tool-badge {
+        font-size: 1.7rem !important;
     }
 
     .tool-input-card {
-        min-height: 168px;
+        padding: 10px !important;
     }
-}
 
-.tool-card {
-    padding: 18px;
-}
+    .tool-axis-inputs {
+        gap: 8px !important;
+    }
 
-.tool-card-top {
-    gap: 16px;
-}
+    .tool-columns {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
 
-.tool-section-title {
-    margin-bottom: 10px;
-}
+    .tool-section-title {
+        font-size: 0.64rem !important;
+        margin-bottom: 8px !important;
+    }
 
-.tool-metric-grid {
-    gap: 10px;
-}
+    .tool-metric-grid {
+        gap: 6px !important;
+    }
 
-.tool-metric {
-    align-items: center;
-    min-height: 54px;
-    gap: 10px;
-}
+    .tool-metric {
+        min-height: 38px !important;
+        padding: 7px 9px !important;
+        border-radius: 12px !important;
+        gap: 10px !important;
+    }
 
-.tool-metric-label {
-    flex: 1 1 auto;
-    min-width: 0;
-    line-height: 1.2;
-    font-size: 0.68rem;
-}
+    .tool-metric-label {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        line-height: 1.2 !important;
+        font-size: 0.58rem !important;
+        letter-spacing: 0.06em !important;
+    }
 
-.tool-metric-value {
-    flex: 0 0 auto;
-    max-width: 48%;
-    line-height: 1.1;
-    font-size: 0.98rem;
-    word-break: break-word;
-}
+    .tool-metric-value {
+        flex: 0 0 auto !important;
+        max-width: 44% !important;
+        line-height: 1.1 !important;
+        font-size: 0.86rem !important;
+        word-break: break-word !important;
+    }
 
-.tool-input-card .form-control {
-    min-width: 0;
-}
+    .copy-btn {
+        min-height: 38px !important;
+        margin-top: 8px !important;
+        padding: 8px 10px !important;
+        font-size: 0.82rem !important;
+    }
 
-.copy-btn {
-    min-height: 46px;
+    .calibrate-btn {
+        padding: 12px 14px !important;
+        border-radius: 14px !important;
+        font-size: 0.92rem !important;
+    }
+
+    .calibrate-btn .btn-subtext {
+        margin-top: 2px !important;
+        font-size: 0.68rem !important;
+    }
 }
 
 @media (max-width: 1199px) {
