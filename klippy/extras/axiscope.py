@@ -202,6 +202,28 @@ class Axiscope:
         curtime = self.printer.get_reactor().monotonic()
         return float(tool_obj.get_status(curtime).get('gcode_z_offset', 0.0))
 
+    def _get_last_z_result(self):
+        curtime = self.printer.get_reactor().monotonic()
+        for obj_name in ('probe', 'scanner', 'cartographer'):
+            obj = self.printer.lookup_object(obj_name, None)
+            if obj is None:
+                continue
+
+            if hasattr(obj, 'get_status'):
+                try:
+                    status = obj.get_status(curtime)
+                except Exception:
+                    status = None
+                if isinstance(status, dict) and status.get('last_z_result') is not None:
+                    return float(status['last_z_result'])
+
+            if hasattr(obj, 'last_z_result'):
+                try:
+                    return float(obj.last_z_result)
+                except Exception:
+                    pass
+        return None
+
     def update_tool_offsets(self, cfg_data, tool_name, offsets):
         axis = "xyz" if len(offsets) == 3 else "xy"
         section_name = "[%s]" % tool_name
@@ -375,15 +397,14 @@ class Axiscope:
 
             gcmd.respond_info('Cartographer touch-probe with T%i' % tool_no)
             self.gcode.run_script_from_command(self.touch_probe_gcode)
-            probe_obj = self.printer.lookup_object('probe', None)
-            if probe_obj is None or not hasattr(probe_obj, 'last_z_result'):
+
+            raw_delta = self._get_last_z_result()
+            if raw_delta is None:
                 raise gcmd.error(
-                    'Unable to read probe.last_z_result after %s. '
-                    'Confirm your Cartographer build exposes the standard probe status.'
+                    'Unable to read last_z_result after %s. '
+                    'Try exposing it through the standard probe/scanner status object.'
                     % self.touch_probe_gcode
                 )
-
-            raw_delta = float(probe_obj.last_z_result)
             current_offset = self.get_current_tool_z_offset(tool_no)
             suggested_offset = (
                 current_offset + raw_delta
