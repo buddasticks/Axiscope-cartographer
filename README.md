@@ -81,7 +81,7 @@ If you want to use automatic Z calibration, choose one of the following:
 - Camera setup in Crowsnest & Mainsail
 - SSH access to your printer
 
-Quick installation using curl:
+Quick installation using curl (stable `main` branch):
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/buddasticks/Axiscope-cartographer/refs/heads/main/install.sh | bash
@@ -157,7 +157,8 @@ move_speed: 200
 z_move_speed: 10
 samples: 1
 use_current_z_offsets: False
-config_file_path: ~/printer_data/config/printer.cfg
+config_file_path: ~/printer_data/config/axiscope.offsets
+touch_model_config_file_path: ~/printer_data/config/printer.cfg
 
 touch_home_gcode: CARTOGRAPHER_TOUCH_HOME
 touch_probe_gcode: CARTOGRAPHER_TOUCH_PROBE
@@ -203,7 +204,10 @@ finish_gcode:
   For first-time setup or re-zeroing your tools, `False` is usually the easiest and safest choice.
 
 - **`config_file_path`**  
-  Path to the Klipper config file Axiscope reads and writes. This is also where it looks for the saved Cartographer touch-model section in the `#*#` save-config block.
+  Path Axiscope writes tool offsets to when using the save commands.
+
+- **`touch_model_config_file_path`**  
+  Optional path Axiscope reads the saved Cartographer touch-model `z_offset` from. If unset in the config, it defaults to `~/printer_data/config/printer.cfg`.
 
 - **`touch_home_gcode`**  
   The command Axiscope uses to establish the reference tool’s Z zero. With Cartographer this is normally `CARTOGRAPHER_TOUCH_HOME`.
@@ -237,7 +241,7 @@ For most new users:
 - `reference_tool` should normally be `0`
 - Axiscope performs the reference touch-home with the reference tool first, then probes the remaining tools
 - The web UI shows **Contact Z** and **Suggested Z** instead of the older `Z-Trigger` wording
-- If your Cartographer setup has a saved touch-model section in the `#*#` save-config area, Axiscope reads that `z_offset` and uses it in the Cartographer fallback path when needed
+- If your Cartographer setup has a saved touch-model section in the `#*#` save-config area, Axiscope reads that `z_offset` from `touch_model_config_file_path` and uses it in the Cartographer fallback path when needed
 - The original Z-endstop map is hidden when the Cartographer backend is active
 
 ### Finding the endstop position for the switch backend
