@@ -94,7 +94,6 @@ The install script will:
 - Set up the systemd service
 - Configure Moonraker integration
 
-
 ### Starting Axiscope
 
 1. Open your Mainsail interface
@@ -157,7 +156,8 @@ move_speed: 200
 z_move_speed: 10
 samples: 1
 use_current_z_offsets: False
-config_file_path: ~/printer_data/config/axiscope.offsets
+
+config_file_path: ~/printer_data/config/printer.cfg
 touch_model_config_file_path: ~/printer_data/config/printer.cfg
 
 touch_home_gcode: CARTOGRAPHER_TOUCH_HOME
