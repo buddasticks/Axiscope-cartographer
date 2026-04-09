@@ -27,7 +27,7 @@ This is the classic Axiscope method.
 - The UI shows the Z-endstop position map and **Set Current Position** button
 
 ### 2. Cartographer touch workflow
-
+ONLY TESTED WITH CARTOGRAPHER V4 
 This is the newer backend added for Cartographer users.
 
 - Uses `CARTOGRAPHER_TOUCH_HOME` on the reference tool
