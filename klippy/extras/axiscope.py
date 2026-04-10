@@ -38,6 +38,8 @@ class Axiscope:
 
         self.pin = config.get('pin', None)
         self.config_file_path = config.get('config_file_path', None)
+        self.touch_model_config_file_path = config.get(
+            'touch_model_config_file_path', '~/printer_data/config/printer.cfg')
 
         # Load gcode_macro module for template support
         self.gcode_macro = self.printer.load_object(config, 'gcode_macro')
@@ -126,7 +128,8 @@ class Axiscope:
         )
 
     def _load_cartographer_touch_model_z_offset(self):
-        if self.config_file_path is None or not os.path.exists(self.config_file_path):
+        if (self.touch_model_config_file_path is None
+                or not os.path.exists(self.touch_model_config_file_path)):
             return 0.0
 
         section_prefixes = (
@@ -136,7 +139,7 @@ class Axiscope:
         in_touch_model = False
 
         try:
-            with open(self.config_file_path, 'r') as f:
+            with open(self.touch_model_config_file_path, 'r') as f:
                 for raw_line in f:
                     line = raw_line.strip()
                     if any(line.startswith(prefix) for prefix in section_prefixes):
@@ -173,19 +176,9 @@ class Axiscope:
             self.config_file_path = expanded_path
             if os.path.exists(self.config_file_path):
                 self.has_cfg_data = True
-                if self.z_backend == 'cartographer':
-                    self.cartographer_touch_model_z_offset = self._load_cartographer_touch_model_z_offset()
                 self.gcode.respond_info(
                     "Axiscope config file found (%s)." % self.config_file_path
                 )
-                self.gcode.respond_info(
-                    "--Axiscope Loaded-- (z_backend=%s)" % self.z_backend
-                )
-                if self.z_backend == 'cartographer':
-                    self.gcode.respond_info(
-                        "Axiscope Cartographer touch_model z_offset = %.5f"
-                        % self.cartographer_touch_model_z_offset
-                    )
             else:
                 self.gcode.respond_info(
                     "Could not find Axiscope config file (%s)" % self.config_file_path
@@ -202,6 +195,22 @@ class Axiscope:
             self.gcode.respond_info(
                 "You can set config_file_path: ~/printer_data/config/axiscope.offsets "
                 "in your [axiscope] section."
+            )
+
+        if self.touch_model_config_file_path is not None:
+            self.touch_model_config_file_path = os.path.expanduser(
+                self.touch_model_config_file_path)
+
+        self.gcode.respond_info(
+            "--Axiscope Loaded-- (z_backend=%s)" % self.z_backend
+        )
+
+        if self.z_backend == 'cartographer':
+            self.cartographer_touch_model_z_offset = self._load_cartographer_touch_model_z_offset()
+            self.gcode.respond_info(
+                "Axiscope Cartographer touch_model source (%s) z_offset = %.5f"
+                % (self.touch_model_config_file_path,
+                   self.cartographer_touch_model_z_offset)
             )
 
     def get_status(self, eventtime):
