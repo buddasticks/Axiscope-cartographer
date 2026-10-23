@@ -455,7 +455,16 @@ $(document).ready(function() {
                                 $cameraList.empty();
                                 
                                 cams.forEach(function(cam) {
-                                    const streamUrl = printerUrl(ip, cam.stream_url);
+                                    // Extract path from cam.stream_url (remove protocol and host if present)
+                                    let streamPath = cam.stream_url;
+                                    try {
+                                        const url = new URL(cam.stream_url);
+                                        streamPath = url.pathname + url.search;
+                                    } catch (e) {
+                                        // If not a full URL, use as-is (already a path)
+                                        streamPath = cam.stream_url;
+                                    }
+                                    const streamUrl = printerUrl(ip, streamPath);
                                     const snapshotUrl = streamUrl.replace('?action=stream', '?action=snapshot');
                                     
                                     const cameraOption = `
