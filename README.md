@@ -115,62 +115,57 @@ If you only want camera-based XY alignment, Axiscope can be installed without an
 If you want to use the original automatic Z calibration method with a physical switch, add the following to your `printer.cfg`:
 
 ```ini
+# printer.cfg
+
 [axiscope]
-z_backend: switch
-pin: !PG15                # Endstop pin
-zswitch_x_pos: 226.71     # REQUIRED - X position of the endstop switch
-zswitch_y_pos: -18.46     # REQUIRED - Y position of the endstop switch
-zswitch_z_pos: 7.8        # REQUIRED - Z position + some clearance of the endstop switch
-lift_z: 1                 # OPTIONAL - Amount to lift Z before moving (default: 1)
-move_speed: 60            # OPTIONAL - XY movement speed in mm/s (default: 60)
-z_move_speed: 10          # OPTIONAL - Z movement speed in mm/s (default: 10)
-config_file_path: ~/printer_data/config/printer.cfg
-
-start_gcode:
-  {% set tools = printer.toolchanger.tool_numbers %}
-  {% for tool in tools %}
-      M104 T{tool} S150
-  {% endfor %}
-before_pickup_gcode: M118 pickup_gcode
-after_pickup_gcode: M118 after_pickup_gcode
-finish_gcode: M118 Calibration complete
-  {% set tools = printer.toolchanger.tool_numbers %}
-  {% for tool in tools %}
-      M104 T{tool} S0
-  {% endfor %}
-  T0
-```
-
-### Cartographer backend configuration
-
-If you want to use Cartographer touch probing for tool Z calibration, add something like this:
-
-```ini
-[axiscope]
+# --- Backend ---
+# 'cartographer' for touch calibration, 'switch' for the physical Z endstop workflow.
 z_backend: cartographer
-probe_x_pos: 185
-probe_y_pos: 175
-reference_tool: 0
-lift_z: 10
-move_speed: 200
-z_move_speed: 10
-samples: 1
-use_current_z_offsets: False
+# Leave empty to auto-detect [cartographer], then [scanner] (old plugin).
+cartographer_name:
 
-config_file_path: ~/printer_data/config/printer.cfg
-touch_model_config_file_path: ~/printer_data/config/printer.cfg
-
+# --- Cartographer touch ---
+probe_x_pos: 100.0          # clear spot on the bed for the touch
+probe_y_pos: 100.0
+reference_tool: 0           # T0 sets the Z datum
 touch_home_gcode: CARTOGRAPHER_TOUCH_HOME
 touch_probe_gcode: CARTOGRAPHER_TOUCH_PROBE
+touch_repeats: 3            # touches per tool; the median is used
+touch_retract_z: 3.0        # lift between re-touches; set 0 if the touch macro already retracts
+use_current_z_offsets: False  # False = offset is tap_z - reference_z
 
-start_gcode:
-  G28
-  T0
-  QUAD_GANTRY_LEVEL
-before_pickup_gcode:
-after_pickup_gcode:
-finish_gcode:
-  T0
+# --- Touch accuracy check ---
+touch_accuracy_command: CARTOGRAPHER_TOUCH_ACCURACY
+touch_accuracy_status_key:  # empty = range not checked; set after CARTOGRAPHER_QUERY FIELD=touch confirms the key
+touch_accuracy_max_range: 0.01
+require_touch_accuracy: False
+
+# --- Safety ---
+require_zero_reference_offset: True   # abort if T0 has a non-zero gcode_z_offset
+
+# --- Motion ---
+lift_z: 1
+move_speed: 60
+z_move_speed: 10
+samples: 10
+
+# --- Saving ---
+# Must point at the file that holds your [tool Tn] sections (usually printer.cfg).
+config_file_path: ~/printer_data/config/printer.cfg
+# Optional: logs the touch model z_offset at startup. Leave empty to skip.
+touch_model_config_file_path:
+
+# --- Switch backend only (ignored when z_backend: cartographer) ---
+# zswitch_x_pos:
+# zswitch_y_pos:
+# zswitch_z_pos:
+# pin:
+
+# --- Macros (optional) ---
+# start_gcode:
+# before_pickup_gcode:
+# after_pickup_gcode:
+# finish_gcode:
 ```
 
 #### What these Cartographer options mean
