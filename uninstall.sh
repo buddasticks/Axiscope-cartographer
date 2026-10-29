@@ -50,7 +50,8 @@ fi
 # Remove update manager configuration from moonraker.conf
 if [ -f "${MOONRAKER_CONF}" ]; then
     echo "Removing update manager configuration..."
-    sed -i '/\[update_manager axiscope\]/,/\[\|^$/!{/\[update_manager axiscope\]/,/^$/d}' "${MOONRAKER_CONF}"
+    awk 'BEGIN{skip=0} /^\[update_manager axiscope\]/{skip=1; next} /^\[/{skip=0} !skip' "${MOONRAKER_CONF}" > "${MOONRAKER_CONF}.axiscope.tmp" \
+        && mv "${MOONRAKER_CONF}.axiscope.tmp" "${MOONRAKER_CONF}"
 fi
 
 # Remove symlink from klipper extras
