@@ -1,4 +1,3 @@
-````markdown
 # Axiscope
 
 ## What is Axiscope?
@@ -45,13 +44,14 @@ This is the classic Axiscope method.
 
 The following parts are required if you want to build the camera yourself:
 
-- [\[XY Nozzle Alignment Camera\]](https://www.printables.com/model/1099576-xy-nozzle-alignment-camera) - 3D printed parts
+- [XY Nozzle Alignment Camera](https://www.printables.com/model/1099576-xy-nozzle-alignment-camera) - 3D printed parts
 - OV9726 camera module
-- 5V 3mm round white 6000-6500k LEDs x 4
+- 5V 3mm round white 6000-6500K LEDs x 4
 
 #### Pre-assembled Option
 
 A fully assembled camera with long USB cable can be purchased from:
+
 - [Ember Prototypes](https://www.emberprototypes.com/products/cxc)
 
 ### Z Calibration Requirements (Optional)
@@ -329,7 +329,6 @@ Use `AXISCOPE_SAVE_TOOL_OFFSET` for one tool, or `AXISCOPE_SAVE_MULTIPLE_TOOL_OF
 - `AXES`: optional. Inferred from the number of offsets if you leave it out. Use it to be explicit, e.g. `AXES=z`
 
 Example for one tool's Z:
-
 ```
 AXISCOPE_SAVE_TOOL_OFFSET TOOL_NAME="tool T1" OFFSETS=[0.05] AXES=z
 ```
@@ -381,11 +380,11 @@ Only Axiscope should be using the `probe_multi_axis` module when configured corr
 
 ### Error: T0 has a non-zero gcode_z_offset
 
-The touch datum is T0 at zero offset. If T0 has an offset, every other tool would be shifted by the same amount, so the run stops before touching anything. Zero it with:
-
+The touch datum is T0 at zero offset. If T0 has an offset, every other tool would be shifted by the same amount, so the run stops before touching anything. Zero it with: 
 ```
 SET_TOOL_PARAMETER T=0 PARAMETER=gcode_z_offset VALUE=0
 ```
+
 
 Then run `SAVE_CONFIG`, and calibrate again. If you know your datum is correct, you can set `require_zero_reference_offset: False`.
 
@@ -441,4 +440,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-````
+
