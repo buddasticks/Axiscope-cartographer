@@ -40,6 +40,8 @@ class Axiscope:
         self.touch_accuracy_status_key = config.get('touch_accuracy_status_key', '').strip()
         self.touch_accuracy_max_range = config.getfloat('touch_accuracy_max_range', 0.01, above=0.)
         self.require_touch_accuracy = config.getboolean('require_touch_accuracy', False)
+        # The touch datum is T0 at zero gcode_z_offset. Abort if it isn't.
+        self.require_zero_reference_offset = config.getboolean('require_zero_reference_offset', True)
         # Default False matches the working KTC-Easy logic: offset = tap_z - reference_z.
         self.use_current_z_offsets = config.getboolean('use_current_z_offsets', False)
         self.cartographer_reference_z = None
@@ -165,16 +167,10 @@ class Axiscope:
 
     def _check_touch_model(self, gcmd):
         # Touching without a loaded touch model gives unusable Z values.
-        try:
-            model = self._cartographer_touch_status().get('current_model')
-        except Exception as exc:
-            gcmd.respond_error(str(exc))
-            return False
+        model = self._cartographer_touch_status().get('current_model')
         if model in (None, '', 'none'):
-            gcmd.respond_error(
+            raise gcmd.error(
                 'Cartographer has no touch model. Run CARTOGRAPHER_TOUCH_CALIBRATE first.')
-            return False
-        return True
 
     def _read_touch_z(self, gcmd):
         # Contact Z comes only from the touch result. No toolhead-height fallback.
@@ -216,6 +212,54 @@ class Axiscope:
             previous = value
             gcmd.respond_info('touch %d/%d: Z=%.6f' % (i + 1, self.touch_repeats, value))
         return statistics.median(values), values
+
+    def _check_reference_offset(self, gcmd):
+        # The touch datum is the reference tool at zero offset. A stored T0 offset shifts every tool.
+        if not self.require_zero_reference_offset:
+            return
+        ref_offset = self.get_current_tool_z_offset(self.reference_tool)
+        if abs(ref_offset) > 1e-6:
+            raise gcmd.error(
+                'T%i has gcode_z_offset %.6f. The touch datum must be T%i at zero offset. '
+                'Zero it (SET_TOOL_PARAMETER T=%i PARAMETER=gcode_z_offset VALUE=0), '
+                'SAVE_CONFIG, and re-run. Or set require_zero_reference_offset: False '
+                'if you know your datum is correct.'
+                % (self.reference_tool, ref_offset, self.reference_tool, self.reference_tool))
+
+    def _measure_reference_here(self, gcmd, safe_z):
+        # Touch-home and median-touch the reference tool, which must be on the shuttle now.
+        self._check_reference_offset(gcmd)
+        toolhead = self.printer.lookup_object('toolhead')
+        gcmd.respond_info('Cartographer touch-home with T%i (Z datum)' % self.reference_tool)
+        self.gcode.run_script_from_command(self.touch_home_gcode)
+        toolhead.wait_moves()
+        ref_z, _ = self._touch_median(gcmd)
+        self.cartographer_reference_z = ref_z
+        self.probe_results[str(self.reference_tool)] = self._build_probe_result(
+            source='cartographer_touch_reference',
+            measured_contact_z=ref_z,
+            suggested_gcode_z_offset=0.0,
+            measured_time=self.printer.get_reactor().monotonic(),
+            z_delta=0.0,
+            touch_model_z_offset=self.cartographer_touch_model_z_offset,
+        )
+        gcmd.respond_info('T%i reference contact Z=%.6f' % (self.reference_tool, ref_z))
+        toolhead.manual_move([None, None, safe_z], self.z_move_speed)
+        toolhead.wait_moves()
+        return ref_z
+
+    def _measure_reference_then_return(self, gcmd, return_tool):
+        # Used when Tn is probed before any reference exists: measure T0, then go back to Tn.
+        self.cmd_AXISCOPE_BEFORE_PICKUP_GCODE(gcmd)
+        self.gcode.run_script_from_command('T%i' % self.reference_tool)
+        self.cmd_AXISCOPE_AFTER_PICKUP_GCODE(gcmd)
+        self.gcode.run_script_from_command('MOVE_TO_ZSWITCH')
+        self._measure_reference_here(gcmd, self.lift_z)
+
+        self.cmd_AXISCOPE_BEFORE_PICKUP_GCODE(gcmd)
+        self.gcode.run_script_from_command('T%i' % return_tool)
+        self.cmd_AXISCOPE_AFTER_PICKUP_GCODE(gcmd)
+        self.gcode.run_script_from_command('MOVE_TO_ZSWITCH')
 
     def _run_touch_accuracy_gate(self, gcmd):
         if self.z_backend != 'cartographer' or not self.touch_accuracy_command:
@@ -260,8 +304,7 @@ class Axiscope:
 
     def _active_tool_number(self, gcmd):
         if self.toolchanger.active_tool is None:
-            gcmd.respond_error('No active tool selected')
-            return None
+            raise gcmd.error('No active tool selected')
         return int(self.toolchanger.active_tool.tool_number)
 
     # ------------------------------------------------------------------
@@ -429,15 +472,36 @@ class Axiscope:
     # Config file writing
     # ------------------------------------------------------------------
 
-    def update_tool_offsets(self, cfg_data, tool_name, offsets):
-        axis = "xyz" if len(offsets) == 3 else "xy"
+    def _read_cfg(self):
+        with open(self.config_file_path, 'r') as f:
+            return f.readlines()
+
+    def _write_cfg(self, cfg_data):
+        with open(self.config_file_path, 'w') as f:
+            for line in cfg_data:
+                f.write(line)
+
+    def _validate_offsets(self, gcmd, values, axes_arg):
+        # Returns (floats, axes). Explicit AXES must match the value count; otherwise infer from it.
+        if isinstance(values, (int, float)):
+            values = [values]
+        if (not isinstance(values, (list, tuple)) or not 1 <= len(values) <= 3
+                or any(isinstance(v, bool) or not isinstance(v, (int, float)) for v in values)):
+            raise gcmd.error('OFFSETS must be a list of 1 to 3 numbers, e.g. [0.05] or [0.1, 0.2]')
+        values = [float(v) for v in values]
+        axes = (axes_arg or '').strip().lower() or {1: 'z', 2: 'xy', 3: 'xyz'}[len(values)]
+        if len(axes) != len(values) or any(a not in 'xyz' for a in axes) or len(set(axes)) != len(axes):
+            raise gcmd.error('AXES must be unique letters from x, y, z matching OFFSETS, e.g. AXES=z')
+        return values, axes
+
+    def update_tool_offsets(self, cfg_data, tool_name, offsets, axes):
+        # Writes only the axes given. Other gcode_*_offset values in the section are left alone.
         section_name = "[%s]" % tool_name
         start = None
         end = None
 
-        # Locate the target section's body: start index, and index of the next section header.
         for i, line in enumerate(cfg_data):
-            stripped = line.strip()
+            stripped = line.split('#', 1)[0].strip()
             if start is None:
                 if stripped == section_name:
                     start = i + 1
@@ -448,9 +512,9 @@ class Axiscope:
             end = len(cfg_data)
 
         new_section = None
-        for i, a in enumerate(axis):
-            offset_name = "gcode_%s_offset" % a
-            offset_string = "%s: %.6f\n" % (offset_name, offsets[i])
+        for axis, value in zip(axes, offsets):
+            offset_name = "gcode_%s_offset" % axis
+            offset_string = "%s: %.6f\n" % (offset_name, value)
 
             if start is None:
                 if new_section is None:
@@ -461,19 +525,23 @@ class Axiscope:
             # Only search inside the target section, never the whole file.
             found = None
             for j in range(start, end):
-                key = cfg_data[j].strip().split(':', 1)[0].strip()
-                if key == offset_name:
+                if cfg_data[j].split('#', 1)[0].split(':', 1)[0].strip() == offset_name:
                     found = j
                     break
 
             if found is not None:
                 cfg_data[found] = offset_string
             else:
+                # Keep the line before the insert newline-terminated (a file can end without one).
+                if end > 0 and not cfg_data[end - 1].endswith('\n'):
+                    cfg_data[end - 1] += '\n'
                 cfg_data.insert(end, offset_string)
                 end += 1
 
         if new_section is not None:
             new_section.append("\n")
+            if cfg_data and not cfg_data[-1].endswith('\n'):
+                cfg_data[-1] += '\n'
             no_touch_index = None
             if self.config_file_path and self.config_file_path.endswith('printer.cfg'):
                 for idx, line in enumerate(cfg_data):
@@ -544,10 +612,7 @@ class Axiscope:
 
     def _probe_switch_backend(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
-        tool_no = self._active_tool_number(gcmd)
-        if tool_no is None:
-            return
-        tool_no = str(tool_no)
+        tool_no = str(self._active_tool_number(gcmd))
         start_pos = toolhead.get_position()
         z_result = self.probe_multi_axis.run_probe(
             "z-", gcmd, speed_ratio=0.5, max_distance=10.0,
@@ -587,56 +652,41 @@ class Axiscope:
 
     def _probe_cartographer_backend(self, gcmd):
         if not self.has_probe_point():
-            gcmd.respond_error('Cartographer probe point is not valid.')
-            return
-        if not self._check_touch_model(gcmd):
-            return
+            raise gcmd.error('Cartographer probe point is not valid (set probe_x_pos and probe_y_pos).')
+        if not self.is_homed():
+            raise gcmd.error('Home first (G28).')
+        self._check_touch_model(gcmd)
+        tool_no = self._active_tool_number(gcmd)
+
+        # A Tn probe needs the T0 datum. Measure it now if this session doesn't have one.
+        if tool_no != self.reference_tool and self.cartographer_reference_z is None:
+            gcmd.respond_info('No reference yet; measuring T%i first.' % self.reference_tool)
+            self._measure_reference_then_return(gcmd, tool_no)
 
         toolhead = self.printer.lookup_object('toolhead')
-        tool_no = self._active_tool_number(gcmd)
-        if tool_no is None:
-            return
         start_pos = toolhead.get_position()
         measured_time = self.printer.get_reactor().monotonic()
 
         if tool_no == self.reference_tool:
-            # T0 sets the Z datum: touch-home, then a touch median as the reference reading.
-            gcmd.respond_info('Cartographer touch-home with T%i (Z datum)' % tool_no)
-            self.gcode.run_script_from_command(self.touch_home_gcode)
-            toolhead.wait_moves()
-            ref_z, _ = self._touch_median(gcmd)
-            self.cartographer_reference_z = ref_z
-            self.probe_results[str(tool_no)] = self._build_probe_result(
-                source='cartographer_touch_reference',
-                measured_contact_z=ref_z,
-                suggested_gcode_z_offset=0.0,
-                measured_time=measured_time,
-                z_delta=0.0,
-                touch_model_z_offset=self.cartographer_touch_model_z_offset,
-            )
-            gcmd.respond_info('T%i reference contact Z=%.6f' % (tool_no, ref_z))
-        else:
-            if self.cartographer_reference_z is None:
-                gcmd.respond_error(
-                    'Reference tool T%i must be measured first.' % self.reference_tool)
-                return
+            self._measure_reference_here(gcmd, max(start_pos[2], self.lift_z))
+            return
 
-            gcmd.respond_info('Cartographer touch-probe with T%i' % tool_no)
-            measured_z, _ = self._touch_median(gcmd)
-            delta = measured_z - self.cartographer_reference_z
-            current_offset = self.get_current_tool_z_offset(tool_no)
-            suggested_offset = current_offset + delta if self.use_current_z_offsets else delta
-            self.probe_results[str(tool_no)] = self._build_probe_result(
-                source='cartographer_touch',
-                measured_contact_z=measured_z,
-                suggested_gcode_z_offset=suggested_offset,
-                measured_time=measured_time,
-                z_delta=delta,
-                touch_model_z_offset=self.cartographer_touch_model_z_offset,
-            )
-            gcmd.respond_info(
-                'T%i contact Z=%.6f delta=%.6f suggested_gcode_z_offset=%.6f'
-                % (tool_no, measured_z, delta, suggested_offset))
+        gcmd.respond_info('Cartographer touch-probe with T%i' % tool_no)
+        measured_z, _ = self._touch_median(gcmd)
+        delta = measured_z - self.cartographer_reference_z
+        current_offset = self.get_current_tool_z_offset(tool_no)
+        suggested_offset = current_offset + delta if self.use_current_z_offsets else delta
+        self.probe_results[str(tool_no)] = self._build_probe_result(
+            source='cartographer_touch',
+            measured_contact_z=measured_z,
+            suggested_gcode_z_offset=suggested_offset,
+            measured_time=measured_time,
+            z_delta=delta,
+            touch_model_z_offset=self.cartographer_touch_model_z_offset,
+        )
+        gcmd.respond_info(
+            'T%i contact Z=%.6f delta=%.6f suggested_gcode_z_offset=%.6f'
+            % (tool_no, measured_z, delta, suggested_offset))
 
         # Lift away from the bed before the next tool change.
         safe_return_z = max(start_pos[2], self.lift_z)
@@ -664,17 +714,14 @@ class Axiscope:
         if not self._run_touch_accuracy_gate(gcmd):
             return
 
+        if self.z_backend == 'cartographer':
+            # Fail before any tool is picked up.
+            self._check_touch_model(gcmd)
+            self._check_reference_offset(gcmd)
+
         # Per-run reset so stale reference data can't leak into this run.
         self.probe_results = {}
         self.cartographer_reference_z = None
-
-        if self.z_backend == 'cartographer':
-            ref_offset = self.get_current_tool_z_offset(self.reference_tool)
-            if abs(ref_offset) > 1e-6:
-                gcmd.respond_info(
-                    'Warning: T%i has gcode_z_offset %.6f. Offsets are measured as differences, '
-                    'but check that T%i is set up as intended.'
-                    % (self.reference_tool, ref_offset, self.reference_tool))
 
         ordered_tools = list(self.toolchanger.tool_numbers)
         if self.reference_tool in ordered_tools:
@@ -735,47 +782,48 @@ class Axiscope:
     cmd_AXISCOPE_SAVE_TOOL_OFFSET_help = "Save a tool offset to your axiscope config file."
 
     def cmd_AXISCOPE_SAVE_TOOL_OFFSET(self, gcmd):
-        if self.has_cfg_data is not False:
-            with open(self.config_file_path, 'r') as f:
-                cfg_data = f.readlines()
-
-            tool_name = gcmd.get('TOOL_NAME')
-            offsets = ast.literal_eval(gcmd.get('OFFSETS'))
-            out_data = self.update_tool_offsets(cfg_data, tool_name, offsets)
-            gcmd.respond_info("Writing %s offsets." % tool_name)
-
-            with open(self.config_file_path, 'w') as f:
-                for line in out_data:
-                    f.write(line)
-                gcmd.respond_info("Offsets written successfully.")
-        else:
+        # OFFSETS: e.g. [0.05] (z), [0.1, 0.2] (xy), [0.1, 0.2, 0.05] (xyz). AXES overrides the inferred axes.
+        if self.has_cfg_data is False:
             gcmd.respond_info(
-                "Axiscope needs a valid config location (config_file_path) to save tool offsets."
-            )
+                "Axiscope needs a valid config location (config_file_path) to save tool offsets.")
+            return
+        tool_name = gcmd.get('TOOL_NAME')
+        try:
+            raw = ast.literal_eval(gcmd.get('OFFSETS'))
+        except Exception:
+            raise gcmd.error('OFFSETS must be a Python-style list, e.g. OFFSETS=[0.05]')
+        values, axes = self._validate_offsets(gcmd, raw, gcmd.get('AXES', ''))
+        out_data = self.update_tool_offsets(self._read_cfg(), tool_name, values, axes)
+        self._write_cfg(out_data)
+        gcmd.respond_info("Offsets (%s) written for %s." % (axes, tool_name))
 
     cmd_AXISCOPE_SAVE_MULTIPLE_TOOL_OFFSETS_help = "Save multiple tool offsets to your axiscope config file."
 
     def cmd_AXISCOPE_SAVE_MULTIPLE_TOOL_OFFSETS(self, gcmd):
-        if self.has_cfg_data is not False:
-            with open(self.config_file_path, 'r') as f:
-                cfg_data = f.readlines()
-
-            tool_names = ast.literal_eval(gcmd.get('TOOLS'))
-            offsets = ast.literal_eval(gcmd.get('OFFSETS'))
-            out_data = cfg_data
-
-            for i, tool_name in enumerate(tool_names):
-                out_data = self.update_tool_offsets(out_data, tool_name, offsets[i])
-
-            gcmd.respond_info("Writing offsets for %s." % ', '.join(tool_names))
-            with open(self.config_file_path, 'w') as f:
-                for line in out_data:
-                    f.write(line)
-                gcmd.respond_info("Offsets written successfully.")
-        else:
+        # Every entry is validated before the file is written, so a bad entry writes nothing.
+        if self.has_cfg_data is False:
             gcmd.respond_info(
-                "Axiscope needs a valid config location (config_file_path) to save tool offsets."
-            )
+                "Axiscope needs a valid config location (config_file_path) to save tool offsets.")
+            return
+        try:
+            tool_names = ast.literal_eval(gcmd.get('TOOLS'))
+            offsets_all = ast.literal_eval(gcmd.get('OFFSETS'))
+        except Exception:
+            raise gcmd.error('TOOLS and OFFSETS must be Python-style lists')
+        if not isinstance(tool_names, (list, tuple)) or not isinstance(offsets_all, (list, tuple)):
+            raise gcmd.error('TOOLS and OFFSETS must be lists')
+        if len(tool_names) != len(offsets_all):
+            raise gcmd.error('TOOLS and OFFSETS must have the same number of entries')
+
+        axes_arg = gcmd.get('AXES', '')
+        plan = [(str(name),) + self._validate_offsets(gcmd, raw, axes_arg)
+                for name, raw in zip(tool_names, offsets_all)]
+
+        cfg_data = self._read_cfg()
+        for name, values, axes in plan:
+            cfg_data = self.update_tool_offsets(cfg_data, name, values, axes)
+        self._write_cfg(cfg_data)
+        gcmd.respond_info("Offsets written for %s." % ', '.join(name for name, _, _ in plan))
 
     cmd_AXISCOPE_SET_ENDSTOP_POSITION_help = "Set kinematic position for X, Y, and/or Z axes"
 
