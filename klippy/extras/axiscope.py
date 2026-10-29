@@ -1,9 +1,9 @@
 # /home/klipper/klippy/extras/axiscope.py
 import os
 import ast
+import shutil
 import statistics
 from . import tools_calibrate
-from . import toolchanger
 
 
 class Axiscope:
@@ -137,6 +137,10 @@ class Axiscope:
         self.gcode.register_command(
             'AXISCOPE_SET_ENDSTOP_POSITION', self.cmd_AXISCOPE_SET_ENDSTOP_POSITION,
             desc=self.cmd_AXISCOPE_SET_ENDSTOP_POSITION_help
+        )
+        self.gcode.register_command(
+            'AXISCOPE_CALIBRATE_TOOL_Z', self.cmd_AXISCOPE_CALIBRATE_TOOL_Z,
+            desc="Calibrate the Z offset for one tool (TOOL=n)"
         )
 
     # ------------------------------------------------------------------
@@ -447,27 +451,6 @@ class Axiscope:
         curtime = self.printer.get_reactor().monotonic()
         return float(tool_obj.get_status(curtime).get('gcode_z_offset', 0.0))
 
-    def _get_last_z_result(self):
-        # Kept for the switch backend's legacy probe objects.
-        curtime = self.printer.get_reactor().monotonic()
-        for obj_name in ('probe', 'scanner', 'cartographer'):
-            obj = self.printer.lookup_object(obj_name, None)
-            if obj is None:
-                continue
-            if hasattr(obj, 'get_status'):
-                try:
-                    status = obj.get_status(curtime)
-                except Exception:
-                    status = None
-                if isinstance(status, dict) and status.get('last_z_result') is not None:
-                    return float(status['last_z_result'])
-            if hasattr(obj, 'last_z_result'):
-                try:
-                    return float(obj.last_z_result)
-                except Exception:
-                    pass
-        return None
-
     # ------------------------------------------------------------------
     # Config file writing
     # ------------------------------------------------------------------
@@ -477,9 +460,15 @@ class Axiscope:
             return f.readlines()
 
     def _write_cfg(self, cfg_data):
-        with open(self.config_file_path, 'w') as f:
-            for line in cfg_data:
-                f.write(line)
+        # Keep a backup, write to a temp file, then swap it in, so a crash mid-write can't corrupt the config.
+        if os.path.exists(self.config_file_path):
+            shutil.copy2(self.config_file_path, self.config_file_path + '.axiscope.bak')
+        tmp_path = self.config_file_path + '.axiscope.tmp'
+        with open(tmp_path, 'w') as f:
+            f.writelines(cfg_data)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, self.config_file_path)
 
     def _validate_offsets(self, gcmd, values, axes_arg):
         # Returns (floats, axes). Explicit AXES must match the value count; otherwise infer from it.
@@ -505,7 +494,8 @@ class Axiscope:
             if start is None:
                 if stripped == section_name:
                     start = i + 1
-            elif stripped.startswith('['):
+            elif stripped.startswith('[') or line.lstrip().startswith('#*#'):
+                # Stop at the next section OR the SAVE_CONFIG marker, so new lines never land below it.
                 end = i
                 break
         if start is not None and end is None:
@@ -824,6 +814,20 @@ class Axiscope:
             cfg_data = self.update_tool_offsets(cfg_data, name, values, axes)
         self._write_cfg(cfg_data)
         gcmd.respond_info("Offsets written for %s." % ', '.join(name for name, _, _ in plan))
+
+    cmd_AXISCOPE_CALIBRATE_TOOL_Z_help = "Calibrate the Z offset for one tool (TOOL=n)"
+
+    def cmd_AXISCOPE_CALIBRATE_TOOL_Z(self, gcmd):
+        tool_no = gcmd.get_int('TOOL')
+        if tool_no not in self.toolchanger.tool_numbers:
+            raise gcmd.error('T%i is not a defined tool' % tool_no)
+        if not self.is_homed():
+            raise gcmd.error('Home first (G28).')
+        self.cmd_AXISCOPE_BEFORE_PICKUP_GCODE(gcmd)
+        self.gcode.run_script_from_command('T%i' % tool_no)
+        self.cmd_AXISCOPE_AFTER_PICKUP_GCODE(gcmd)
+        self.gcode.run_script_from_command('MOVE_TO_ZSWITCH')
+        self.gcode.run_script_from_command('PROBE_ZSWITCH SAMPLES=%i' % self.samples)
 
     cmd_AXISCOPE_SET_ENDSTOP_POSITION_help = "Set kinematic position for X, Y, and/or Z axes"
 
