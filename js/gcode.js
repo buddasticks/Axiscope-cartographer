@@ -1,6 +1,6 @@
 
 function sendGcode() {
-  var url = printerUrl(printerIp, "/printer/gcode/script?script=" + $("#gcode-input").val())
+  var url = printerUrl(printerIp, "/printer/gcode/script?script=" + encodeURIComponent($("#gcode-input").val()))
   $("#gcode-input").val("");
 
   $.get(url, function(data){
